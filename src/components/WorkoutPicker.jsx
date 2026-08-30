@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { ChevronLeft, Calendar, Repeat, AlertCircle } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  ChevronLeft, Calendar, Repeat, AlertCircle, Pencil, Plus, Clock3,
+} from "lucide-react";
 import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
+  createWorkout,
   describeDays,
   describeTarget,
   describeOrderMode,
 } from "../lib/coachData";
 import ExerciseDetail from "./ExerciseDetail";
+import TargetSheet from "./TargetSheet";
+import ExerciseEditor from "./ExerciseEditor";
 
 const KINDS = {
   stretch: { label: "Stretch", text: "text-cyan-300", bg: "bg-cyan-400" },
@@ -22,29 +27,49 @@ const minutes = (sec) => `${Math.max(1, Math.round(sec / 60))} min`;
  * The front door: what's on today, everything else below it, and a tap into
  * any workout's exercise list.
  */
-export default function WorkoutPicker({ onStart, onSignOut }) {
+export default function WorkoutPicker({ onStart, onEdit, onHistory, onSignOut }) {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openId, setOpenId] = useState(null);
 
+  const reload = useCallback(
+    () =>
+      fetchOrSeedWorkouts()
+        .then(setWorkouts)
+        .catch((e) => setError(e.message ?? "Couldn't load your workouts."))
+        .finally(() => setLoading(false)),
+    []
+  );
+
   useEffect(() => {
-    let cancelled = false;
-
-    fetchOrSeedWorkouts()
-      .then((list) => !cancelled && setWorkouts(list))
-      .catch((e) => !cancelled && setError(e.message ?? "Couldn't load your workouts."))
-      .finally(() => !cancelled && setLoading(false));
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    reload();
+  }, [reload]);
 
   if (openId) {
     const workout = workouts.find((w) => w.id === openId);
-    return <WorkoutDetail workout={workout} onBack={() => setOpenId(null)} onStart={onStart} />;
+    return (
+      <WorkoutDetail
+        workout={workout}
+        onBack={() => setOpenId(null)}
+        onStart={onStart}
+        onEdit={onEdit}
+        onTargetChanged={reload}
+      />
+    );
   }
+
+  const addWorkout = async () => {
+    const name = window.prompt("Name this workout", "New workout");
+    if (!name?.trim()) return;
+    try {
+      const id = await createWorkout({ name: name.trim(), days: [] });
+      await reload();
+      onEdit?.({ id, name: name.trim(), days: [], orderMode: "straight", restSec: 15 });
+    } catch (e) {
+      setError(e.message);
+    }
+  };
 
   const today = new Date().getDay();
   const scheduled = workouts.filter((w) => w.days.includes(today));
@@ -60,11 +85,21 @@ export default function WorkoutPicker({ onStart, onSignOut }) {
             </p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">Today</h1>
           </div>
-          {onSignOut && (
-            <button onClick={onSignOut} className="text-xs text-slate-500 hover:text-slate-300">
-              Sign out
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {onHistory && (
+              <button
+                onClick={onHistory}
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+              >
+                <Clock3 size={12} /> History
+              </button>
+            )}
+            {onSignOut && (
+              <button onClick={onSignOut} className="text-xs text-slate-500 hover:text-slate-300">
+                Sign out
+              </button>
+            )}
+          </div>
         </header>
 
         {loading && <p className="mt-8 text-sm text-slate-500">Loading your workouts…</p>}
@@ -95,6 +130,16 @@ export default function WorkoutPicker({ onStart, onSignOut }) {
                 ))}
               </div>
             )}
+
+            <button
+              onClick={addWorkout}
+              className="mt-6 w-full border border-dashed border-slate-800 rounded-sm py-3
+                         inline-flex items-center justify-center gap-1.5 text-sm text-slate-500
+                         hover:border-slate-600 hover:text-slate-300
+                         focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            >
+              <Plus size={14} /> New workout
+            </button>
 
             {rest.length > 0 && (
               <>
@@ -149,23 +194,23 @@ function WorkoutCard({ workout, highlight, onOpen }) {
   );
 }
 
-function WorkoutDetail({ workout, onBack, onStart }) {
+function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailId, setDetailId] = useState(null);
+  const [targetFor, setTargetFor] = useState(null);
+  const [editingExercise, setEditingExercise] = useState(null);
+
+  const reloadList = useCallback(() => {
+    if (!workout) return Promise.resolve();
+    return fetchWorkoutExercises(workout.id)
+      .then(setList)
+      .finally(() => setLoading(false));
+  }, [workout]);
 
   useEffect(() => {
-    if (!workout) return;
-    let cancelled = false;
-
-    fetchWorkoutExercises(workout.id)
-      .then((rows) => !cancelled && setList(rows))
-      .finally(() => !cancelled && setLoading(false));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [workout]);
+    reloadList();
+  }, [reloadList]);
 
   if (!workout) return null;
 
@@ -196,11 +241,11 @@ function WorkoutDetail({ workout, onBack, onStart }) {
             {list.map((ex) => {
               const kind = KINDS[ex.kind];
               return (
-                <li key={ex.id}>
+                <li key={ex.id} className="flex items-baseline gap-3 py-3">
                   <button
                     onClick={() => setDetailId(ex.exerciseId)}
-                    className="w-full text-left py-3 flex items-baseline gap-3
-                               hover:bg-slate-900/60 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="flex-1 text-left flex items-baseline gap-3
+                               hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-400"
                   >
                     <span className={`w-1 h-1 rounded-full shrink-0 ${kind?.bg ?? "bg-slate-600"}`} />
                     <span className="flex-1">
@@ -209,15 +254,24 @@ function WorkoutDetail({ workout, onBack, onStart }) {
                         <span className="block text-xs text-slate-500 mt-0.5">{ex.cue}</span>
                       )}
                     </span>
-                    <span
-                      className={`text-sm shrink-0 ${
-                        ex.targetIsPersonal ? "text-slate-400" : "text-slate-600 italic"
-                      }`}
-                      style={{ fontVariantNumeric: "tabular-nums" }}
-                      title={ex.targetIsPersonal ? "Your target" : "Suggested — you haven't set a target"}
-                    >
-                      {describeTarget(ex)}
-                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setTargetFor(ex)}
+                    title={
+                      ex.targetIsPersonal
+                        ? "Your target — tap to change"
+                        : "Suggested — tap to make it yours"
+                    }
+                    className={`text-sm shrink-0 border-b border-dashed
+                                hover:text-cyan-300 hover:border-cyan-400
+                                focus:outline-none focus:ring-1 focus:ring-cyan-400
+                                ${ex.targetIsPersonal
+                                  ? "text-slate-400 border-slate-700"
+                                  : "text-slate-600 italic border-slate-800"}`}
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {describeTarget(ex)}
                   </button>
                 </li>
               );
@@ -225,10 +279,22 @@ function WorkoutDetail({ workout, onBack, onStart }) {
           </ul>
         )}
 
+        {onEdit && (
+          <button
+            onClick={() => onEdit(workout)}
+            className="mt-6 w-full border border-slate-800 rounded-sm py-2.5
+                       inline-flex items-center justify-center gap-1.5 text-sm text-slate-400
+                       hover:border-slate-600 hover:text-slate-200
+                       focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          >
+            <Pencil size={13} /> Edit workout
+          </button>
+        )}
+
         {onStart && (
           <button
-            onClick={() => onStart(workout, list)}
-            className="mt-7 w-full bg-cyan-400 text-slate-950 rounded-sm py-3 font-medium
+            onClick={() => onStart(workout)}
+            className="mt-3 w-full bg-cyan-400 text-slate-950 rounded-sm py-3 font-medium
                        hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400
                        focus:ring-offset-2 focus:ring-offset-slate-950"
           >
@@ -238,7 +304,35 @@ function WorkoutDetail({ workout, onBack, onStart }) {
       </div>
 
       {detailId && (
-        <ExerciseDetail exerciseId={detailId} onClose={() => setDetailId(null)} />
+        <ExerciseDetail
+          exerciseId={detailId}
+          onClose={() => setDetailId(null)}
+          onEdit={(exercise) => {
+            setDetailId(null);
+            setEditingExercise(exercise);
+          }}
+        />
+      )}
+
+      {editingExercise && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950">
+          <ExerciseEditor
+            exercise={editingExercise}
+            onClose={() => setEditingExercise(null)}
+            onSaved={reloadList}
+          />
+        </div>
+      )}
+
+      {targetFor && (
+        <TargetSheet
+          exercise={targetFor}
+          onClose={() => setTargetFor(null)}
+          onSaved={() => {
+            reloadList();
+            onTargetChanged?.();
+          }}
+        />
       )}
     </div>
   );

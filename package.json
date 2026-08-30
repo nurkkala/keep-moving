@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/verify-build.mjs",
     "preview": "vite preview",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --linked > src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --linked > src/lib/database.types.ts",
+    "verify": "node scripts/verify-build.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

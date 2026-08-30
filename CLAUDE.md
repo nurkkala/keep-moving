@@ -102,6 +102,26 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 - Voice recognition is Chrome and Edge only. The coach must ignore audio while
   it is speaking, or it hears itself say "done."
 
+## Building
+
+`npm run build` runs `vite build` then `scripts/verify-build.mjs`, which asserts
+each screen actually made it into the bundle.
+
+That check exists because a Vite build **succeeds while producing a bundle with
+almost no application code**. `import.meta.env` is replaced at build time, so a
+module-scope `throw` on a missing env var becomes unconditional and Rollup
+prunes every module downstream as unreachable — no warning, exit code 0, a
+deployable bundle containing React and an error string. It happened here once.
+
+Two rules follow:
+- **Keep `src/lib/supabase.js` free of side effects at import time.** Export
+  `isConfigured` and let a component render the problem.
+- **Build with env vars present.** Without them the app correctly compiles down
+  to just the setup screen, and `verify-build` will tell you so.
+
+The check also catches a component that exists but nothing imports — that's how
+`ExerciseEditor` was found unwired.
+
 ## Database changes
 
 Schema changes are migrations, never dashboard edits:
