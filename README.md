@@ -7,10 +7,26 @@ your workouts and history follow you across devices.
 ## Running it
 
 ```bash
-npm install
 cp .env.example .env.local     # then paste your anon key
-npm run dev
+make dev                       # http://localhost:5173, hot reload
 ```
+
+`make dev` installs dependencies if they're stale and stops with a readable
+message if `.env.local` is missing, so it's the only command needed from a
+fresh clone. `make help` lists all 15 targets. Override the port with
+`make dev PORT=3000`.
+
+| | |
+| --- | --- |
+| `make dev` | Dev server with hot reload — the everyday loop |
+| `make run` | Build for production, then serve that build |
+| `make build` | Production build + verify every screen shipped |
+| `make preview` | Serve an existing build without rebuilding |
+| `make check` | What CI would run |
+| `make clean` | Drop build output and Vite's cache |
+
+There is no separate backend to run. The app is a Vite SPA against hosted
+Supabase, with no edge functions, so `dev` is one process rather than two.
 
 The anon key is at **Project Settings → API Keys** in the Supabase dashboard.
 It's public by design — row level security protects the data, not the key.
@@ -25,13 +41,26 @@ spoken announcements, the logging — works anywhere.
 
 ## The database
 
-Twenty-five migrations in `supabase/migrations/`, matching the versions already
+Twenty-six migrations in `supabase/migrations/`, matching the versions already
 applied to the linked project. To work against them:
 
 ```bash
-supabase link --project-ref irjgefdsllshzzqxzful
-supabase migration list          # local and remote should agree
+supabase link --project-ref irjgefdsllshzzqxzful   # once
+make db-status                                     # local and remote should agree
 ```
+
+| | |
+| --- | --- |
+| `make db-status` | Compare local migrations against the linked project |
+| `make db-new NAME=add_something` | Scaffold a migration |
+| `make db-push` | Apply pending migrations to the linked project |
+| `make db-lint` | Lint the schema — run after anything that adds a table |
+| `make db-types` | Regenerate TypeScript types from the linked schema |
+
+These act on the **live hosted project**, so none of them is wired into a watch
+loop. Re-applying migrations on every save would run schema changes against the
+real database, and migrations don't roll back — `make db-push` stays manual on
+purpose.
 
 Several early migrations create things that later ones drop — `routine_exercises`
 and `save_routine` are gone, replaced by `workouts` and `workout_exercises`, and
@@ -51,24 +80,30 @@ src/lib/speech.js         Speaking and listening
 src/components/           AuthGate, WorkoutPicker, SessionScreen, WorkoutEditor,
                           ExerciseDetail, ExerciseEditor, TargetSheet,
                           EquipmentInventory, History
+src/lib/theme.js          Dark / light / system, and where each is stored
 supabase/migrations/      Schema, in order
 scripts/                  Build verification
+Makefile                  Every task worth running; `make help` lists them
 docs/SCHEMA.md            The data model and why it's shaped that way
-docs/INTEGRATION.md       Porting the original prototype off window.storage
+docs/INTEGRATION.md       How the original prototype came off window.storage
 CLAUDE.md                 Conventions and open work
 ```
 
 ## Building
 
 ```bash
-npm run build
+make build
 ```
 
 That runs `vite build` and then `scripts/verify-build.mjs`, which asserts each
 screen actually made it into the bundle — a Vite build can succeed while
 producing a bundle with almost no application code, so the check is not
 optional. **Build with your env vars present**: without them the app correctly
-compiles down to just the setup screen, and `verify-build` will say so.
+compiles down to just the setup screen, and `verify-build` will say so. The
+`make` target guards this, refusing to build without `.env.local`.
+
+The npm scripts still exist and `make` calls them, so `npm run build` works
+identically — it just skips the guards.
 
 ## Status
 
