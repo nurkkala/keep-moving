@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { X, Play, ExternalLink, Pencil } from "lucide-react";
-import { fetchExercise, describeTarget } from "../lib/coachData";
+import { X, Play, ExternalLink, Pencil, AlertTriangle } from "lucide-react";
+import { fetchExercise, describeTarget, fetchAvailability, fetchAlternatives } from "../lib/coachData";
 
 const KINDS = {
   stretch: { label: "Stretch", text: "text-cyan-300", bg: "bg-cyan-400" },
@@ -47,6 +47,8 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
   const [loading, setLoading] = useState(!exercise);
   const [error, setError] = useState(null);
   const [playing, setPlaying] = useState(false);
+  const [blocked, setBlocked] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
   const closeRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +72,28 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
       cancelled = true;
     };
   }, [exercise, exerciseId]);
+
+  // Equipment you don't own doesn't hide an exercise — it explains it, and
+  // offers something you could do instead.
+  useEffect(() => {
+    const id = data?.id ?? exerciseId;
+    if (!id) return;
+    let cancelled = false;
+
+    fetchAvailability()
+      .then((all) => {
+        if (cancelled) return;
+        const mine = all[id];
+        if (!mine || mine.canDo) return setBlocked(null);
+        setBlocked(mine);
+        return fetchAlternatives(id).then((alts) => !cancelled && setAlternatives(alts));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data?.id, exerciseId]);
 
   // Escape closes; focus lands on the close button so keyboard users aren't lost.
   useEffect(() => {
@@ -182,6 +206,39 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
               <div className="mt-5">
                 <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">About</p>
                 <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">{data.description}</p>
+              </div>
+            )}
+
+            {blocked && (
+              <div className="mt-6 border border-amber-900/60 bg-amber-950/20 rounded-sm p-4">
+                <p className="inline-flex items-center gap-2 text-sm text-amber-300">
+                  <AlertTriangle size={15} />
+                  You don't have {blocked.missing.join(" or ")}
+                </p>
+
+                {alternatives.length > 0 ? (
+                  <>
+                    <p className="mt-2 text-xs text-slate-400">
+                      Works the same area, and you have what it needs:
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {alternatives.map((alt) => (
+                        <li key={alt.exerciseId} className="text-sm text-slate-300">
+                          {alt.name}
+                          <span className="text-slate-600 text-xs">
+                            {" "}
+                            · {alt.sharedAreas === 1 ? "same area" : `${alt.sharedAreas} shared areas`}
+                            {alt.needs.length > 0 && ` · needs ${alt.needs.join(", ")}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Nothing in your library covers the same ground yet.
+                  </p>
+                )}
               </div>
             )}
 

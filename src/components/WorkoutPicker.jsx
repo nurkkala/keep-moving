@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   ChevronLeft, Calendar, Repeat, AlertCircle, Pencil, Plus, Clock3,
+  AlertTriangle, Package,
 } from "lucide-react";
 import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
+  fetchWorkoutEquipment,
   createWorkout,
   describeDays,
   describeTarget,
@@ -27,7 +29,7 @@ const minutes = (sec) => `${Math.max(1, Math.round(sec / 60))} min`;
  * The front door: what's on today, everything else below it, and a tap into
  * any workout's exercise list.
  */
-export default function WorkoutPicker({ onStart, onEdit, onHistory, onSignOut }) {
+export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment, onSignOut }) {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,6 +88,14 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onSignOut })
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">Today</h1>
           </div>
           <div className="flex items-center gap-3">
+            {onEquipment && (
+              <button
+                onClick={onEquipment}
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+              >
+                <Package size={12} /> Kit
+              </button>
+            )}
             {onHistory && (
               <button
                 onClick={onHistory}
@@ -189,6 +199,11 @@ function WorkoutCard({ workout, highlight, onOpen }) {
             <Repeat size={11} /> {describeOrderMode(workout.orderMode)}
           </span>
         )}
+        {workout.missingEquipment > 0 && (
+          <span className="inline-flex items-center gap-1 text-amber-400/80">
+            <AlertTriangle size={11} /> missing kit
+          </span>
+        )}
       </div>
     </button>
   );
@@ -200,6 +215,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   const [detailId, setDetailId] = useState(null);
   const [targetFor, setTargetFor] = useState(null);
   const [editingExercise, setEditingExercise] = useState(null);
+  const [equipment, setEquipment] = useState([]);
 
   const reloadList = useCallback(() => {
     if (!workout) return Promise.resolve();
@@ -210,7 +226,8 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
 
   useEffect(() => {
     reloadList();
-  }, [reloadList]);
+    if (workout) fetchWorkoutEquipment(workout.id).then(setEquipment).catch(() => {});
+  }, [reloadList, workout]);
 
   if (!workout) return null;
 
@@ -277,6 +294,34 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
               );
             })}
           </ul>
+        )}
+
+        {equipment.length > 0 && (
+          <div className="mt-6 border border-slate-800 rounded-sm p-4">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+              What you'll need
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {equipment.map((eq) => (
+                <span
+                  key={eq.id}
+                  title={`Used by ${eq.usedBy} ${eq.usedBy === 1 ? "exercise" : "exercises"}`}
+                  className={`text-xs border rounded-sm px-2 py-0.5
+                              ${eq.owned
+                                ? "border-slate-700 text-slate-300"
+                                : "border-amber-800 text-amber-300"}`}
+                >
+                  {eq.label}
+                  {!eq.owned && " — don't have"}
+                </span>
+              ))}
+            </div>
+            {equipment.some((e) => !e.owned) && (
+              <p className="mt-2 text-[11px] text-slate-500">
+                Tap an exercise to see what you could do instead.
+              </p>
+            )}
+          </div>
         )}
 
         {onEdit && (

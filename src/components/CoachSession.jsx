@@ -136,6 +136,8 @@ export default function CoachSession({ workout, onExit, onFinished }) {
           : step.targetType === "time"
           ? seconds
           : actualOverride ?? step.targetValue,
+        // Distance is entered, not measured — the target stands unless the
+        // user adjusts it, and actualSec below gives the pace either way.
         actualSec: skipped ? 0 : seconds,
         skipped,
         how,
@@ -212,6 +214,10 @@ export default function CoachSession({ workout, onExit, onFinished }) {
       if (step.targetValue >= 25) fire("half", () => speak("Halfway."));
       countdown(target - elapsed);
       if (elapsed >= target) closeOut("timer");
+    } else if (step.targetType === "distance") {
+      // Nothing here can measure distance, so this runs as an open clock and
+      // the user says or taps when they're done. Wall time gives the pace.
+      if (elapsed > 300000) fire("check", () => speak("Still going. Say done when you finish."));
     } else if (elapsed > 90000) {
       fire("check", () => speak("Still going? Say done when you finish."));
     }
@@ -251,7 +257,8 @@ export default function CoachSession({ workout, onExit, onFinished }) {
         return closeOut("voice", cmd.value ?? repCount);
       }
 
-      if (step?.targetType !== "reps" || phase !== "work") return;
+      if ((step?.targetType !== "reps" && step?.targetType !== "distance") || phase !== "work")
+        return;
 
       // "two more" / "three fewer" adjust; a bare number sets it outright.
       if (cmd.type === "adjust") {
@@ -455,10 +462,14 @@ export default function CoachSession({ workout, onExit, onFinished }) {
       {/* Rep sets: adjust before logging, so a shortfall is recorded honestly.
           Targets are oversized — this gets tapped with a sweaty thumb, at
           arm's length, sometimes through a sleeve. */}
-      {phase === "work" && step.targetType === "reps" && (
+      {phase === "work" && (step.targetType === "reps" || step.targetType === "distance") && (
         <div className="mt-7 flex items-center justify-center gap-5">
           <button
-            onClick={() => setRepCount((c) => Math.max(0, (c ?? step.targetValue) - 1))}
+            onClick={() =>
+              setRepCount((c) =>
+                Math.max(0, (c ?? step.targetValue) - (step.targetType === "distance" ? 100 : 1))
+              )
+            }
             aria-label="One fewer rep"
             className="w-20 h-20 border-2 border-slate-700 rounded-sm grid place-items-center
                        text-slate-300 active:bg-slate-800 hover:border-slate-500
@@ -474,11 +485,13 @@ export default function CoachSession({ workout, onExit, onFinished }) {
               {repCount ?? step.targetValue}
             </span>
             <span className="block mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-              reps done
+              {step.targetType === "distance" ? "metres" : "reps done"}
             </span>
           </div>
           <button
-            onClick={() => setRepCount((c) => (c ?? step.targetValue) + 1)}
+            onClick={() =>
+              setRepCount((c) => (c ?? step.targetValue) + (step.targetType === "distance" ? 100 : 1))
+            }
             aria-label="One more rep"
             className="w-20 h-20 border-2 border-slate-700 rounded-sm grid place-items-center
                        text-slate-300 active:bg-slate-800 hover:border-slate-500

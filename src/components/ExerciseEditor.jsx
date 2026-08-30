@@ -200,17 +200,21 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
           What a newcomer should try. Not your target — set that separately.
         </p>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {["time", "reps"].map((t) => (
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { v: "time", label: "Time" },
+            { v: "reps", label: "Reps" },
+            { v: "distance", label: "Distance" },
+          ].map((t) => (
             <button
-              key={t}
-              onClick={() => setSuggestedType(t)}
+              key={t.v}
+              onClick={() => setSuggestedType(t.v)}
               className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400
-                          ${suggestedType === t
+                          ${suggestedType === t.v
                             ? "border-cyan-400 text-cyan-300"
                             : "border-slate-800 text-slate-400 hover:border-slate-600"}`}
             >
-              {t === "time" ? "Hold for time" : "Count reps"}
+              {t.label}
             </button>
           ))}
         </div>
@@ -218,7 +222,11 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
-              {suggestedType === "time" ? "Seconds" : "Reps"}
+              {suggestedType === "time"
+                ? "Seconds"
+                : suggestedType === "distance"
+                ? "Metres"
+                : "Reps"}
             </span>
             <input
               type="number"

@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
-import { setExerciseTarget, clearExerciseTarget, describeTarget } from "../lib/coachData";
+import {
+  setExerciseTarget, clearExerciseTarget, describeTarget,
+  fetchPrefs, toMetres, fromMetres,
+} from "../lib/coachData";
 
 /**
  * Sets what this user is aiming for on one exercise. A target is state, not a
@@ -12,6 +15,11 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
   const [targetValue, setTargetValue] = useState(exercise.targetValue ?? 30);
   const [sets, setSets] = useState(exercise.sets ?? 1);
   const [note, setNote] = useState("");
+  const [unit, setUnit] = useState("mi");
+
+  useEffect(() => {
+    fetchPrefs().then((p) => setUnit(p.distanceUnit)).catch(() => {});
+  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -46,7 +54,8 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
   };
 
   const step = targetType === "time" ? 5 : 1;
-  const unit = targetType === "time" ? "seconds" : "reps";
+  const label =
+    targetType === "time" ? "seconds" : targetType === "distance" ? unit : "reps";
 
   return (
     <div
@@ -78,33 +87,60 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
         {!exercise.targetIsPersonal && (
           <p className="mt-3 text-xs text-slate-500">
             Currently on the library's suggestion of{" "}
-            {describeTarget(exercise, { long: true })}. Saving makes it yours.
+            {describeTarget(exercise, { long: true, unit })}. Saving makes it yours.
           </p>
         )}
 
         {/* Measured by duration or by count — never both. */}
-        <div className="mt-6 grid grid-cols-2 gap-2">
-          {["time", "reps"].map((t) => (
+        <div className="mt-6 grid grid-cols-3 gap-2">
+          {[
+            { v: "time", label: "Time" },
+            { v: "reps", label: "Reps" },
+            { v: "distance", label: "Distance" },
+          ].map((t) => (
             <button
-              key={t}
-              onClick={() => setTargetType(t)}
+              key={t.v}
+              onClick={() => setTargetType(t.v)}
               className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400
-                          ${targetType === t
+                          ${targetType === t.v
                             ? "border-cyan-400 text-cyan-300"
                             : "border-slate-700 text-slate-400 hover:border-slate-500"}`}
             >
-              {t === "time" ? "Hold for time" : "Count reps"}
+              {t.label}
             </button>
           ))}
         </div>
 
-        <Stepper
-          label={unit}
-          value={targetValue}
-          step={step}
-          min={1}
-          onChange={setTargetValue}
-        />
+        {targetType === "distance" ? (
+          <label className="block mt-5">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
+              Distance in {label}
+            </span>
+            <input
+              type="number"
+              min="0.1"
+              step="0.1"
+              value={fromMetres(targetValue, unit)}
+              onChange={(e) =>
+                setTargetValue(toMetres(parseFloat(e.target.value) || 0, unit))
+              }
+              className="mt-1 w-full bg-slate-950 border border-slate-700 rounded-sm px-3 py-2 text-sm
+                         focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            />
+            <span className="block mt-1 text-[11px] text-slate-600">
+              Stored as {targetValue} m, so switching units never rewrites history.
+            </span>
+          </label>
+        ) : (
+          <Stepper
+            label={label}
+            value={targetValue}
+            step={step}
+            min={1}
+            onChange={setTargetValue}
+          />
+        )}
         <Stepper label="sets" value={sets} step={1} min={1} max={10} onChange={setSets} />
 
         <label className="block mt-5">

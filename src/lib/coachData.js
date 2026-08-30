@@ -210,20 +210,70 @@ export async function createAttributeValue(typeId, key, label) {
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+const METRES_PER_MILE = 1609.344;
+
+/** Distance is stored in metres; this is only ever a display concern. */
+export function formatDistance(metres, unit = "mi", { long = false } = {}) {
+  if (metres == null) return "";
+
+  const value = unit === "km" ? metres / 1000 : metres / METRES_PER_MILE;
+  // Under a tenth reads better as the raw unit than as "0.1".
+  const rounded = value < 0.95 ? value.toFixed(2) : value.toFixed(1).replace(/\.0$/, "");
+
+  if (!long) return `${rounded} ${unit}`;
+  return `${rounded} ${unit === "km" ? "kilometres" : "miles"}`;
+}
+
+/** Turns a typed distance back into metres for storage. */
+export function toMetres(value, unit = "mi") {
+  return Math.round(unit === "km" ? value * 1000 : value * METRES_PER_MILE);
+}
+
 /**
- * A target rendered for reading: "45s", "12× · 3 sets", or long form
- * "45 seconds". Hold times and per-side counts are cues, not targets — they
- * live in the exercise's instructions and get spoken, not measured.
+ * Metres to a number suitable for an input box in the user's unit.
+ *
+ * Two decimal places, so a metres → miles → metres roundtrip is lossy by up
+ * to ~16 m. That's why the target sheet only writes back when the field is
+ * actually edited: opening and closing it must not nudge the number.
  */
-export function describeTarget({ targetType, targetValue, sets = 1 }, { long = false } = {}) {
+export function fromMetres(metres, unit = "mi") {
+  if (metres == null) return "";
+  const v = unit === "km" ? metres / 1000 : metres / METRES_PER_MILE;
+  return Math.round(v * 100) / 100;
+}
+
+/**
+ * A target rendered for reading: "45s", "12× · 3 sets", "3.1 mi". Hold times
+ * and per-side counts are cues, not targets — they live in the exercise's
+ * instructions and get spoken, not measured.
+ */
+export function describeTarget(
+  { targetType, targetValue, sets = 1 },
+  { long = false, unit = "mi" } = {}
+) {
   if (targetValue == null) return "";
 
-  const one = targetType === "time"
-    ? (long ? `${targetValue} seconds` : `${targetValue}s`)
-    : (long ? `${targetValue} reps` : `${targetValue}×`);
+  let one;
+  if (targetType === "time") {
+    one = long ? `${targetValue} seconds` : `${targetValue}s`;
+  } else if (targetType === "distance") {
+    one = formatDistance(targetValue, unit, { long });
+  } else {
+    one = long ? `${targetValue} reps` : `${targetValue}×`;
+  }
 
   if (!sets || sets <= 1) return one;
   return long ? `${one}, ${sets} sets` : `${one} · ${sets} sets`;
+}
+
+/** "8:12 / mi" — only meaningful for a distance set that was actually done. */
+export function describePace(metres, seconds, unit = "mi") {
+  if (!metres || !seconds) return "";
+  const per = unit === "km" ? 1000 : METRES_PER_MILE;
+  const secsPerUnit = seconds / (metres / per);
+  const m = Math.floor(secsPerUnit / 60);
+  const sec = Math.round(secsPerUnit % 60);
+  return `${m}:${String(sec).padStart(2, "0")} / ${unit}`;
 }
 
 /** "All sets together" vs "One set of each, in rotation". */
@@ -255,8 +305,10 @@ function shapeWorkout(w) {
     orderMode: w.order_mode ?? "straight",
     restSec: w.rest_sec ?? null,
     position: w.position,
+    slotCount: w.slot_count ?? 0,
     exerciseCount: w.exercise_count ?? 0,
     estWorkSec: w.est_work_sec ?? 0,
+    missingEquipment: w.missing_equipment ?? 0,
   };
 }
 
@@ -687,14 +739,105 @@ export async function fetchKindTotals() {
   return Object.fromEntries((data ?? []).map((r) => [r.kind, r.total_sec]));
 }
 
+/* ================================================================== equipment */
+
+/**
+ * Equipment isn't a separate concept — it's the 'equipment' attribute axis.
+ * These functions are about what the user OWNS, which is separate from what
+ * an exercise NEEDS.
+ */
+export async function fetchEquipment() {
+  const [axes, owned] = await Promise.all([
+    fetchAttributeTypes(),
+    supabase.from("user_equipment").select("value_id"),
+  ]);
+  if (owned.error) throw owned.error;
+
+  const have = new Set((owned.data ?? []).map((r) => r.value_id));
+  const axis = axes.find((a) => a.key === "equipment");
+
+  return (axis?.values ?? [])
+    // "No equipment" isn't something you can own or lack.
+    .filter((v) => v.key !== "none")
+    .map((v) => ({ ...v, owned: have.has(v.id) }));
+}
+
+export async function setEquipmentOwned(valueId, owned) {
+  if (owned) {
+    const user = await requireUser();
+    const { error } = await supabase
+      .from("user_equipment")
+      .upsert({ user_id: user.id, value_id: valueId }, { onConflict: "user_id,value_id" });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("user_equipment").delete().eq("value_id", valueId);
+    if (error) throw error;
+  }
+}
+
+/** Per exercise: what it needs, what's missing, whether it's doable. */
+export async function fetchAvailability() {
+  const { data, error } = await supabase.from("exercise_availability").select("*");
+  if (error) throw error;
+
+  return Object.fromEntries(
+    (data ?? []).map((r) => [
+      r.exercise_id,
+      { needs: r.needs ?? [], missing: r.missing ?? [], canDo: r.can_do },
+    ])
+  );
+}
+
+/**
+ * Everything a workout's fixed slots call for. Rule slots are excluded —
+ * which exercises they pick isn't known until the session starts, so their
+ * kit can't be promised in advance.
+ */
+export async function fetchWorkoutEquipment(workoutId) {
+  const { data, error } = await supabase
+    .from("workout_equipment")
+    .select("value_id, label, owned, used_by")
+    .eq("workout_id", workoutId)
+    .order("label");
+
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    id: r.value_id,
+    label: r.label,
+    owned: r.owned,
+    usedBy: r.used_by,
+  }));
+}
+
+/** Things you can do instead, working the same area. */
+export async function fetchAlternatives(exerciseId, want = 3) {
+  const { data, error } = await supabase.rpc("suggest_alternatives", {
+    target_exercise: exerciseId,
+    want,
+  });
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    exerciseId: r.exercise_id,
+    name: r.name,
+    kind: r.kind,
+    sharedAreas: r.shared_areas,
+    sameKind: r.same_kind,
+    needs: r.needs ?? [],
+  }));
+}
+
 /* ================================================================ preferences */
 
-const PREF_DEFAULTS = { voiceURI: null, voiceName: null, rate: 1, restSec: 15 };
+const PREF_DEFAULTS = {
+  voiceURI: null, voiceName: null, rate: 1, restSec: 15, distanceUnit: "mi",
+};
 
 export async function fetchPrefs() {
   const { data, error } = await supabase
     .from("preferences")
-    .select("voice_uri, voice_name, rate, rest_sec")
+    .select("voice_uri, voice_name, rate, rest_sec, distance_unit")
     .maybeSingle();
 
   if (error) throw error;
@@ -705,6 +848,7 @@ export async function fetchPrefs() {
     voiceName: data.voice_name,
     rate: Number(data.rate),
     restSec: data.rest_sec,
+    distanceUnit: data.distance_unit ?? "mi",
   };
 }
 
@@ -717,6 +861,7 @@ export async function savePrefs(partial) {
   if ("voiceName" in partial) row.voice_name = partial.voiceName;
   if ("rate" in partial) row.rate = partial.rate;
   if ("restSec" in partial) row.rest_sec = partial.restSec;
+  if ("distanceUnit" in partial) row.distance_unit = partial.distanceUnit;
 
   const { error } = await supabase.from("preferences").upsert(row, { onConflict: "user_id" });
   if (error) throw error;

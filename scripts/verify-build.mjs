@@ -22,6 +22,7 @@ const SENTINELS = [
   ["exercise detail", "Watch the demonstration"],
   ["history", "Clear saved history"],
   ["rule builder", "This rule says"],
+  ["equipment", "What you have to hand"],
 ];
 
 let bundle = "";

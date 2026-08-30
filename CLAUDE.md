@@ -64,8 +64,21 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 
 ## Conventions
 
-- **One target, one unit.** `target_type` is 'time' or 'reps' and there is a
-  single `target_value`. Never a second number.
+- **One target, one unit.** `target_type` is 'time', 'reps', or 'distance',
+  and there is a single `target_value` — seconds, a count, or **metres**.
+  Never a second number.
+- **Distance is stored in metres, always.** Miles vs kilometres is
+  `preferences.distance_unit`, a display concern only, so switching it can
+  never change what history says you did. `actual_sec` is recorded alongside,
+  which is where pace comes from — don't add a pace column.
+- **Equipment is not a new concept.** It's the `equipment` attribute axis.
+  What an exercise NEEDS is a tag; what the user OWNS is `user_equipment`. A
+  new piece of kit is an INSERT into `attribute_values`, not a migration. A
+  trigger enforces that you can only own something on the equipment axis.
+- Missing equipment **warns, never hides**. `exercise_availability` gives
+  `needs` / `missing` / `can_do`, and `suggest_alternatives()` offers things
+  working the same area that the user can actually do. Someone might borrow a
+  band; filtering the exercise away would just be confusing.
 - **Exercises are shared; targets are personal.** `exercises` is definitional —
   everyone's Plank is the same Plank. What it carries is `suggested_*`, the
   library's recommendation for a newcomer, which is *nobody's target*. The
@@ -101,8 +114,12 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   different answers by design. Don't mark them stable.
 - Rule tags are ANDed. Two tags means an exercise must carry both.
 - `workout_summaries.exercise_count` counts what a workout *will* produce
-  (summing `pick_count`); `slot_count` counts the rows. `est_work_sec` covers
-  fixed slots only — rule slots aren't known until resolution.
+  (summing `pick_count`); `slot_count` counts the rows. `est_work_sec` and
+  `missing_equipment` cover fixed slots only — rule slots aren't known until
+  resolution, so their kit can't be promised in advance.
+- The duration estimate uses rough constants: ~4s a rep, ~2 m/s for distance.
+  It's for the picker card, not for planning. If it needs to be better, derive
+  it from the user's own `performance_history` rather than tuning the numbers.
 - History is a snapshot. `session_items` keeps its own `name` and `kind`, and
   `sessions` keeps `workout_name`, so renaming something doesn't rewrite what
   your history says you did. Don't "fix" this by joining to live rows.

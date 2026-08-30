@@ -5,6 +5,7 @@ import WorkoutPicker from "./components/WorkoutPicker";
 import WorkoutEditor from "./components/WorkoutEditor";
 import CoachSession from "./components/CoachSession";
 import History from "./components/History";
+import EquipmentInventory from "./components/EquipmentInventory";
 
 /**
  * One screen at a time, which suits a phone propped against a wall mid-workout.
@@ -43,11 +44,16 @@ export default function App() {
           return <History onBack={home} />;
         }
 
+        if (view.name === "equipment") {
+          return <EquipmentInventory onBack={home} />;
+        }
+
         return (
           <WorkoutPicker
             key={stamp}
             onSignOut={signOut}
             onHistory={() => setView({ name: "history" })}
+            onEquipment={() => setView({ name: "equipment" })}
             onEdit={(workout) => setView({ name: "edit", workout })}
             onStart={(workout) => setView({ name: "session", workout })}
           />
