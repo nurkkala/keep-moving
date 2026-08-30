@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* The coach is used propped up on a floor or a mat — dark by default,
+   and never bouncing when a sheet opens. */
+html, body, #root { min-height: 100%; }
+body { overscroll-behavior-y: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

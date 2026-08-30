@@ -1,0 +1,19 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Secrets. .env.example is committed; nothing else is.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
