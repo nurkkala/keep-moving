@@ -10,7 +10,7 @@ Three levels, each holding what's true at that level.
 workouts ──< workout_exercises >── exercises
    │                                   │
    │                                   └──< exercise_attributes >── attribute_values >── attribute_types
-   └── days_of_week, starts_on, ends_on
+   └── days_of_week
 ```
 
 `exercises` holds what's true about the movement everywhere: name, description,
@@ -21,9 +21,8 @@ optional sets, and a longer or shorter target if you want one. Leave the
 overrides null and the slot tracks the exercise's defaults — change Plank from
 45s to 60s once and every workout that hasn't overridden it follows.
 
-`workouts` holds the grouping and the schedule: a name, which days it runs,
-and optional start and end dates for a fixed-length PT protocol. Days only —
-there is no time of day.
+`workouts` holds the grouping and the schedule: a name and which days it runs.
+Days only — no time of day, no start or end dates.
 
 ## Scheduling
 
@@ -46,10 +45,9 @@ no trace and creates no debt. Adherence reporting would need a source of
 expected sessions that doesn't currently exist — that's the cost of the
 simplicity, and it was accepted knowingly.
 
-`starts_on` / `ends_on` are for programs with a defined run: a six-week
-post-op protocol expires on its own rather than sitting in the list forever.
 `rest_sec` on a workout overrides the global preference, since a strength
-circuit and a morning stretch don't want the same gap.
+circuit and a morning stretch don't want the same gap. It's the only optional
+column on `workouts` — everything else speculative has been removed.
 
 ## Attributes
 

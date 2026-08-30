@@ -232,9 +232,6 @@ function shapeWorkout(w) {
     days: w.days_of_week ?? [],
     daysLabel: describeDays(w.days_of_week ?? []),
     restSec: w.rest_sec ?? null,
-    startsOn: w.starts_on ?? null,
-    endsOn: w.ends_on ?? null,
-    archived: w.archived,
     position: w.position,
     exerciseCount: w.exercise_count ?? 0,
     estWorkSec: w.est_work_sec ?? 0,
@@ -242,11 +239,12 @@ function shapeWorkout(w) {
 }
 
 /** All workouts with counts and a rough duration, for the picker screen. */
-export async function fetchWorkouts({ includeArchived = false } = {}) {
-  let query = supabase.from("workout_summaries").select("*").order("position");
-  if (!includeArchived) query = query.eq("archived", false);
+export async function fetchWorkouts() {
+  const { data, error } = await supabase
+    .from("workout_summaries")
+    .select("*")
+    .order("position");
 
-  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(shapeWorkout);
 }
@@ -256,7 +254,6 @@ export async function fetchWorkoutsForDay(dayOfWeek = new Date().getDay()) {
   const { data, error } = await supabase
     .from("workout_summaries")
     .select("*")
-    .eq("archived", false)
     .contains("days_of_week", [dayOfWeek])
     .order("position");
 
@@ -274,8 +271,6 @@ export async function createWorkout(workout) {
       description: workout.description || null,
       days_of_week: workout.days ?? [],
       rest_sec: workout.restSec ?? null,
-      starts_on: workout.startsOn || null,
-      ends_on: workout.endsOn || null,
       position: workout.position ?? 0,
     })
     .select("id")
@@ -291,9 +286,6 @@ export async function updateWorkout(id, patch) {
   if ("description" in patch) row.description = patch.description || null;
   if ("days" in patch) row.days_of_week = patch.days;
   if ("restSec" in patch) row.rest_sec = patch.restSec ?? null;
-  if ("startsOn" in patch) row.starts_on = patch.startsOn || null;
-  if ("endsOn" in patch) row.ends_on = patch.endsOn || null;
-  if ("archived" in patch) row.archived = patch.archived;
   if ("position" in patch) row.position = patch.position;
 
   const { error } = await supabase.from("workouts").update(row).eq("id", id);

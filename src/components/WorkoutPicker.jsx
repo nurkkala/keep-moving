@@ -137,7 +137,6 @@ function WorkoutCard({ workout, highlight, onOpen }) {
         <span className="inline-flex items-center gap-1">
           <Calendar size={11} /> {describeDays(workout.days)}
         </span>
-        {workout.endsOn && <span>through {workout.endsOn}</span>}
       </div>
     </button>
   );
