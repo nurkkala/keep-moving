@@ -9,6 +9,7 @@ import ExerciseDetail from "../src/components/ExerciseDetail";
 import ExerciseEditor from "../src/components/ExerciseEditor";
 import TargetSheet from "../src/components/TargetSheet";
 import History from "../src/components/History";
+import EquipmentInventory from "../src/components/EquipmentInventory";
 import { WORKOUTS } from "./mockData";
 
 const noop = () => {};
@@ -30,8 +31,8 @@ const SCREENS = [
     el: <WorkoutEditor workout={WORKOUTS[0]} onBack={noop} onChanged={noop} />,
   },
   {
-    title: "Exercise detail",
-    note: "Read-only. Video loads on tap so a ten-row list isn't ten iframes. Tags read as \"Works\", \"Helps with\", \"Needs\".",
+    title: "Exercise detail — blocked",
+    note: "Needs a band you don't own. It warns rather than hiding, and offers same-area exercises you can actually do.",
     el: (
       <div className="min-h-screen bg-slate-950">
         <ExerciseDetail exerciseId="e7" onClose={noop} onEdit={noop} />
@@ -58,6 +59,11 @@ const SCREENS = [
     title: "New exercise",
     note: "Hold times go in the instructions, which the coach speaks. The numbers are a suggestion for newcomers, not your target.",
     el: <ExerciseEditor onClose={noop} onSaved={noop} />,
+  },
+  {
+    title: "Equipment",
+    note: "What you own. Each unchecked item shows how many exercises it's blocking, so the checklist has a visible consequence.",
+    el: <EquipmentInventory onBack={noop} />,
   },
   {
     title: "History",

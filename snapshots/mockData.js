@@ -8,6 +8,10 @@ export {
   describeTarget,
   describeOrderMode,
   describeRule,
+  describePace,
+  formatDistance,
+  toMetres,
+  fromMetres,
 } from "@real-coachdata";
 
 const wait = (v, ms = 120) => new Promise((r) => setTimeout(() => r(v), ms));
@@ -161,6 +165,12 @@ const LIBRARY = [
     instructions: "Squeeze at the top for a count.", videoUrl: null,
     suggestedType: "reps", suggestedValue: 15, suggestedSets: 1,
     attributes: { body_area: [ATTRS.body_area[3]], condition: [ATTRS.condition[0]] } },
+  { id: "e9", name: "Band pull-apart", kind: "strength", builtIn: false,
+    description: "Upper back and rear shoulders with a resistance band.",
+    instructions: "Squeeze the shoulder blades, arms straight.", videoUrl: null,
+    suggestedType: "reps", suggestedValue: 15, suggestedSets: 3,
+    attributes: { body_area: [ATTRS.body_area[5]], equipment: [ATTRS.equipment[2]],
+                  difficulty: [ATTRS.difficulty[1]] } },
   { id: EX.catcow, name: "Cat cow", kind: "stretch", builtIn: true,
     description: "Segmental spine mobility on hands and knees.",
     instructions: "Move with your breath.", videoUrl: null,
@@ -170,7 +180,7 @@ const LIBRARY = [
 
 export const fetchExercises = ({ search = "" } = {}) =>
   wait(LIBRARY.filter((e) => e.name.toLowerCase().includes(search.toLowerCase())));
-export const fetchExercise = () => wait(LIBRARY[1]);
+export const fetchExercise = () => wait(LIBRARY.find((e) => e.id === "e9") ?? LIBRARY[1]);
 export const createExercise = () => wait(LIBRARY[1]);
 export const updateExercise = () => wait();
 export const deleteExercise = () => wait();
@@ -246,9 +256,45 @@ export const fetchBests = () =>
                    setsPerformed: 18, timesPerformed: 6, lastPerformed: ago(1) },
   });
 
+/* ------------------------------------------------------------- equipment ---- */
+
+export const fetchEquipment = () =>
+  wait([
+    { id: "v12", key: "mat", label: "Mat", owned: true },
+    { id: "v11b", key: "chair", label: "Chair", owned: true },
+    { id: "v13", key: "band", label: "Resistance band", owned: false },
+    { id: "v17", key: "dumbbells", label: "Dumbbells", owned: false },
+    { id: "v18", key: "foam_roller", label: "Foam roller", owned: false },
+  ]);
+
+export const setEquipmentOwned = () => wait();
+
+export const fetchAvailability = () =>
+  wait({
+    e1: { needs: ["Mat"], missing: [], canDo: true },
+    e7: { needs: [], missing: [], canDo: true },
+    e9: { needs: ["Resistance band"], missing: ["Resistance band"], canDo: false },
+    e10: { needs: ["Dumbbells"], missing: ["Dumbbells"], canDo: false },
+  });
+
+export const fetchWorkoutEquipment = () =>
+  wait([
+    { id: "v12", label: "Mat", owned: true, usedBy: 3 },
+    { id: "v13", label: "Resistance band", owned: false, usedBy: 1 },
+  ]);
+
+export const fetchAlternatives = () =>
+  wait([
+    { exerciseId: "e3", name: "Push ups", kind: "strength", sharedAreas: 2,
+      sameKind: true, needs: [] },
+    { exerciseId: "e8", name: "Shoulder rolls", kind: "stretch", sharedAreas: 1,
+      sameKind: false, needs: [] },
+  ]);
+
 export const fetchKindTotals = () => wait({ stretch: 1420, strength: 980, core: 760 });
 export const saveSession = () => wait("new");
 export const deleteSession = () => wait();
 export const clearHistory = () => wait();
-export const fetchPrefs = () => wait({ voiceURI: null, voiceName: null, rate: 1, restSec: 15 });
+export const fetchPrefs = () =>
+  wait({ voiceURI: null, voiceName: null, rate: 1, restSec: 15, distanceUnit: "mi" });
 export const savePrefs = () => wait();
