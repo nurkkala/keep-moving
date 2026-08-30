@@ -14,12 +14,17 @@ workouts ──< workout_exercises >── exercises
 ```
 
 `exercises` holds what's true about the movement everywhere: name, description,
-the reminders you say out loud, the video link, and default reps or duration.
+the reminders you say out loud, the video link, and one target — `target_type`
+('time' or 'reps') plus a single `target_value`. Never two numbers: a duration
+and a rep count are alternative ways of measuring the same set, so storing both
+would let them contradict. Hold times and per-side counts aren't targets at
+all; they're cues, and they live in `instructions`.
 
 `workout_exercises` holds what's true about it *in this workout*: its position,
-optional sets, and a longer or shorter target if you want one. Leave the
-overrides null and the slot tracks the exercise's defaults — change Plank from
-45s to 60s once and every workout that hasn't overridden it follows.
+optional sets, and a longer or shorter target if you want one. An override sets
+both `target_type` and `target_value` or neither. Leave them null and the slot
+tracks the exercise's default — change Plank from 45s to 60s once and every
+workout that hasn't overridden it follows.
 
 `workouts` holds the grouping and the schedule: a name and which days it runs.
 Days only — no time of day, no start or end dates.

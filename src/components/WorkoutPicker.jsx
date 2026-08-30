@@ -4,6 +4,7 @@ import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
   describeDays,
+  describeTarget,
 } from "../lib/coachData";
 import ExerciseDetail from "./ExerciseDetail";
 
@@ -206,7 +207,7 @@ function WorkoutDetail({ workout, onBack, onStart }) {
                       className="text-sm text-slate-400 shrink-0"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
-                      {ex.type === "time" ? `${ex.seconds}s` : `${ex.reps}×`}
+                      {describeTarget(ex)}
                       {ex.sets > 1 && <span className="text-slate-600"> ·{ex.sets}</span>}
                     </span>
                   </button>

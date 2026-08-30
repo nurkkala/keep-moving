@@ -19,7 +19,7 @@ async function requireUser() {
 
 const EXERCISE_SELECT = `
   id, user_id, name, description, instructions, video_url, kind,
-  default_type, default_seconds, default_reps,
+  target_type, target_value,
   tags:exercise_attributes (
     value:attribute_values ( id, key, label, type:attribute_types ( key, label ) )
   )
@@ -47,9 +47,9 @@ function shapeExercise(row) {
     description: row.description ?? "",
     instructions: row.instructions ?? "",
     videoUrl: row.video_url ?? null,
-    type: row.default_type,
-    seconds: row.default_seconds,
-    reps: row.default_reps,
+    // One target, one unit. "45 seconds" or "12 reps", never both.
+    targetType: row.target_type,
+    target: row.target_value,
     builtIn: row.user_id === null,
     attributes,
   };
@@ -116,9 +116,8 @@ export async function createExercise(ex, valueIds = []) {
       description: ex.description || null,
       instructions: ex.instructions || null,
       video_url: ex.videoUrl || null,
-      default_type: ex.type,
-      default_seconds: ex.type === "time" ? ex.seconds : null,
-      default_reps: ex.type === "reps" ? ex.reps : null,
+      target_type: ex.targetType,
+      target_value: ex.target,
     })
     .select("id")
     .single();
@@ -137,11 +136,8 @@ export async function updateExercise(id, patch) {
   if ("description" in patch) row.description = patch.description || null;
   if ("instructions" in patch) row.instructions = patch.instructions || null;
   if ("videoUrl" in patch) row.video_url = patch.videoUrl || null;
-  if ("type" in patch) {
-    row.default_type = patch.type;
-    row.default_seconds = patch.type === "time" ? patch.seconds : null;
-    row.default_reps = patch.type === "reps" ? patch.reps : null;
-  }
+  if ("targetType" in patch) row.target_type = patch.targetType;
+  if ("target" in patch) row.target_value = patch.target;
 
   const { error } = await supabase.from("exercises").update(row).eq("id", id);
   if (error) throw error;
@@ -209,6 +205,17 @@ export async function createAttributeValue(typeId, key, label) {
 /* =================================================================== workouts */
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/**
+ * A target rendered for reading: "45s" / "12×", or long form "45 seconds".
+ * Hold times and per-side counts are cues, not targets — they live in the
+ * exercise's instructions and get spoken, not measured.
+ */
+export function describeTarget({ targetType, target }, { long = false } = {}) {
+  if (target == null) return "";
+  if (targetType === "time") return long ? `${target} seconds` : `${target}s`;
+  return long ? `${target} reps` : `${target}×`;
+}
 
 /** "Mon, Wed, Fri" · "Every day" · "Not scheduled" */
 export function describeDays(days = []) {
@@ -314,9 +321,8 @@ export async function fetchWorkoutExercises(workoutId) {
     exerciseId: r.exercise_id,
     name: r.name,
     kind: r.kind,
-    type: r.type,
-    seconds: r.seconds,
-    reps: r.reps,
+    targetType: r.target_type,
+    target: r.target_value,
     sets: r.sets ?? 1,
     description: r.description ?? "",
     // The coach speaks `cue`: the slot's own note if it has one, otherwise
@@ -326,8 +332,7 @@ export async function fetchWorkoutExercises(workoutId) {
     videoUrl: r.video_url ?? null,
     // Null here means "tracking the exercise default" — useful in the editor.
     overrideType: r.override_type,
-    overrideSeconds: r.override_seconds,
-    overrideReps: r.override_reps,
+    overrideTarget: r.override_value,
   }));
 }
 
@@ -338,9 +343,9 @@ export async function fetchWorkoutExercises(workoutId) {
 export async function saveWorkoutExercises(workoutId, list) {
   const items = list.map((slot) => ({
     exercise_id: slot.exerciseId,
-    type: slot.overrideType ?? null,
-    seconds: slot.overrideSeconds ?? null,
-    reps: slot.overrideReps ?? null,
+    // Both or neither: a unit without a number is rejected by the database.
+    target_type: slot.overrideType ?? null,
+    target_value: slot.overrideTarget ?? null,
     sets: slot.sets && slot.sets > 1 ? slot.sets : null,
     note: slot.note || null,
   }));

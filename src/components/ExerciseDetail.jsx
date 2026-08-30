@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Play, ExternalLink, Pencil } from "lucide-react";
-import { fetchExercise } from "../lib/coachData";
+import { fetchExercise, describeTarget } from "../lib/coachData";
 
 const KINDS = {
   stretch: { label: "Stretch", text: "text-cyan-300", bg: "bg-cyan-400" },
@@ -34,11 +34,6 @@ function embedUrl(raw) {
     return null;
   }
   return null;
-}
-
-function target(ex) {
-  if (!ex) return "";
-  return ex.type === "time" ? `${ex.seconds} seconds` : `${ex.reps} reps`;
 }
 
 /**
@@ -110,7 +105,7 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
             </h2>
             {data && (
               <p className="mt-1 text-sm text-slate-400" style={{ fontVariantNumeric: "tabular-nums" }}>
-                {target(data)}
+                {describeTarget(data, { long: true })}
                 {data.builtIn && <span className="text-slate-600"> · built in</span>}
               </p>
             )}

@@ -64,8 +64,18 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 
 ## Conventions
 
-- Overrides are null-means-inherit. A workout slot with `seconds = null` tracks
-  the exercise's default. Preserve that — don't write the resolved value back.
+- **One target, one unit.** An exercise has `target_type` ('time' or 'reps')
+  and a single `target_value`. There is no second number. A duration and a rep
+  count can never coexist, because the contradictory row is unrepresentable
+  rather than merely forbidden.
+- **Prescription detail the app doesn't measure goes in `instructions` prose,
+  not columns.** Hold times, per-side counts, tempo, breathing — the coach
+  speaks them aloud and never counts them. "Squeeze at the top for a count" is
+  the pattern. Don't add a `hold_sec` column; it would be a stored value the
+  app doesn't honour.
+- Overrides are null-means-inherit, and set both fields or neither. A workout
+  slot with `target_type = null` tracks the exercise's default. Preserve that —
+  don't write the resolved value back.
 - History is a snapshot. `session_items` keeps its own `name` and `kind`, and
   `sessions` keeps `workout_name`, so renaming something doesn't rewrite what
   your history says you did. Don't "fix" this by joining to live rows.
