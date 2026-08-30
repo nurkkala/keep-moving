@@ -51,7 +51,8 @@ make db-status                                     # local and remote should agr
 
 | | |
 | --- | --- |
-| `make db-status` | Compare local migrations against the linked project |
+| `make db-check` | Fail if the project and `supabase/migrations` disagree |
+| `make db-status` | Show every migration's local/remote state |
 | `make db-new NAME=add_something` | Scaffold a migration |
 | `make db-push` | Apply pending migrations to the linked project |
 | `make db-lint` | Lint the schema — run after anything that adds a table |
@@ -61,6 +62,30 @@ These act on the **live hosted project**, so none of them is wired into a watch
 loop. Re-applying migrations on every save would run schema changes against the
 real database, and migrations don't roll back — `make db-push` stays manual on
 purpose.
+
+### Keeping the schema and the repo honest
+
+The migrations are in git, but *applying* them isn't, so the two can drift in
+two directions. Both are checked:
+
+- `make migrations` — no network. Are the files well-named, unique, and
+  committed? Catches a migration written but never committed, and a hand-named
+  file, which silently breaks ordering because the filename timestamp *is* the
+  version.
+- `make db-check` — asks the linked project. Anything committed but not
+  applied (the code expects a column that isn't there), or applied but not
+  committed (nobody can rebuild the schema from the repo). Exits 2 rather than
+  0 when it can't reach the database — an unreachable project is not a healthy
+  one.
+
+`make check` runs the build and the offline half. CI runs the same, and adds
+the drift check **only if** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`,
+and `SUPABASE_PROJECT_ID` are set as repository secrets; without them that job
+reports a notice and skips.
+
+Nothing here applies migrations automatically. Supabase migrations are
+forward-only, so with a single production project the gap between "merged" and
+"irreversible" is worth keeping deliberate.
 
 Several early migrations create things that later ones drop — `routine_exercises`
 and `save_routine` are gone, replaced by `workouts` and `workout_exercises`, and

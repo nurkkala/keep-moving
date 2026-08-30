@@ -192,7 +192,20 @@ supabase migration list              # local and remote must agree
 
 Never hand-name a migration file to match one applied out of band — the
 filename timestamp *is* the version, and inventing one causes drift that only
-surfaces later as a failed push.
+surfaces later as a failed push. `make migrations` now refuses a hand-named
+file rather than letting it reach a push.
+
+**The migrations are in git; applying them is not.** That gap drifts both
+ways, and both directions are checked: `make migrations` (offline — well-named,
+unique, committed) and `make db-check` (asks the linked project — committed but
+unapplied, or applied but uncommitted). Run `make db-check` after any `db push`,
+and before trusting that a fresh clone can rebuild the schema.
+
+Nothing applies migrations automatically, and that's deliberate: they're
+forward-only, and with one production project, auto-applying on merge makes the
+gap between "merged" and "irreversible" zero. CI will run the drift check if
+`SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` / `SUPABASE_PROJECT_ID` are
+set, and skips with a notice otherwise.
 
 Run `supabase db lint` and check the dashboard's Security Advisor after any
 change that adds a table — a table without RLS enabled is readable by anyone

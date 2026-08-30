@@ -10,8 +10,8 @@ SHELL := /bin/bash
 PORT ?= 5173
 ENV_FILE := .env.local
 
-.PHONY: help install dev run build preview verify check clean reset \
-        db-status db-push db-new db-lint db-types
+.PHONY: help install dev run build preview verify check migrations clean reset \
+        db-check db-status db-push db-new db-lint db-types
 
 help: ## Show this help
 	@echo "Keep Moving — make targets"
@@ -56,12 +56,18 @@ build: node_modules $(ENV_FILE) ## Production build + verify every screen shippe
 verify: ## Re-run the bundle check against the current dist/
 	npm run verify
 
-check: build ## What CI would run
-	@echo "ok — bundle built and all screens present"
+check: build migrations ## What CI runs: build, screens present, migrations sane
+	@echo "ok"
+
+migrations: ## Migrations well-named and committed (no network)
+	@node scripts/check-migrations.mjs
 
 # --- database (acts on the LINKED REMOTE project) ---------------------------
 
-db-status: ## Compare local migrations against the linked project
+db-check: ## Fail if the linked project and supabase/migrations disagree
+	@node scripts/check-drift.mjs
+
+db-status: ## Show every migration's local/remote state
 	supabase migration list
 
 db-push: ## Apply pending migrations to the linked project
