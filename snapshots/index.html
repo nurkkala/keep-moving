@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" class="bg-slate-900">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coach — screens</title>
+    <style>
+      /* Each frame stands in for a phone, so screen-height layouts must fill
+         the frame rather than the browser window. */
+      .snap-frame .min-h-screen { min-height: 100%; }
+      .snap-frame .fixed { position: absolute; }
+      .snap-frame { position: relative; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.jsx"></script>
+  </body>
+</html>

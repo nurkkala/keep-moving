@@ -17,3 +17,7 @@ supabase/.branches/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Snapshot build output; coach-screens.html is generated, not committed
+snapshot-dist/
+coach-screens.html

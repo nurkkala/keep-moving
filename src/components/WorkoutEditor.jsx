@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronUp, ChevronDown, Trash2, Plus, Search, X } from "lucide-react";
 import {
-  fetchWorkoutExercises, saveWorkoutExercises, updateWorkout, deleteWorkout,
-  fetchExercises, fetchAttributeTypes, describeTarget,
+  ChevronLeft, ChevronUp, ChevronDown, Trash2, Plus, Search, X, Shuffle,
+} from "lucide-react";
+import {
+  fetchWorkoutSlots, saveWorkoutExercises, updateWorkout, deleteWorkout,
+  fetchExercises, fetchAttributeTypes, describeTarget, describeRule,
 } from "../lib/coachData";
 import ExerciseEditor from "./ExerciseEditor";
 
@@ -25,13 +27,14 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [addingRule, setAddingRule] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchWorkoutExercises(workout.id)
+    fetchWorkoutSlots(workout.id)
       .then((rows) => !cancelled && setList(rows))
       .catch((e) => !cancelled && setError(e.message))
       .finally(() => !cancelled && setLoading(false));
@@ -59,6 +62,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
       ...list,
       {
         id: `new-${exercise.id}`,
+        isRule: false,
         exerciseId: exercise.id,
         name: exercise.name,
         kind: exercise.kind,
@@ -68,6 +72,14 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
         targetIsPersonal: false,
         note: "",
       },
+    ]);
+    setDirty(true);
+  };
+
+  const addRule = (pickCount, tags) => {
+    setList([
+      ...list,
+      { id: `rule-${Date.now()}`, isRule: true, pickCount, tags, note: "" },
     ]);
     setDirty(true);
   };
@@ -99,6 +111,18 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
       setError(e.message);
     }
   };
+
+  if (addingRule) {
+    return (
+      <RuleBuilder
+        onAdd={(n, tags) => {
+          addRule(n, tags);
+          setAddingRule(false);
+        }}
+        onClose={() => setAddingRule(false)}
+      />
+    );
+  }
 
   if (adding) {
     return (
@@ -221,12 +245,20 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
             Exercises ({list.length})
           </p>
-          <button
-            onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
-          >
-            <Plus size={13} /> Add
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setAddingRule(true)}
+              className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
+            >
+              <Shuffle size={12} /> Add a rule
+            </button>
+            <button
+              onClick={() => setAdding(true)}
+              className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
+            >
+              <Plus size={13} /> Add exercise
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -258,15 +290,26 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                   </button>
                 </div>
 
-                <span className="flex-1 text-sm">{ex.name}</span>
+                {ex.isRule ? (
+                  <span className="flex-1 text-sm inline-flex items-center gap-1.5">
+                    <Shuffle size={12} className="text-slate-600 shrink-0" />
+                    <span className="text-slate-300">{describeRule(ex)}</span>
+                  </span>
+                ) : (
+                  <span className="flex-1 text-sm">{ex.name}</span>
+                )}
 
                 <span
                   className={`text-xs shrink-0 ${
-                    ex.targetIsPersonal ? "text-slate-400" : "text-slate-600 italic"
+                    ex.isRule
+                      ? "text-slate-600"
+                      : ex.targetIsPersonal
+                      ? "text-slate-400"
+                      : "text-slate-600 italic"
                   }`}
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
-                  {describeTarget(ex)}
+                  {ex.isRule ? "chosen each session" : describeTarget(ex)}
                 </span>
 
                 <button
@@ -283,6 +326,8 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
 
         <p className="mt-3 text-[11px] text-slate-600">
           Targets are set per exercise, not per workout — tap one in the workout view to change it.
+          Rule slots pick fresh exercises each session, favouring whatever you've done least
+          recently.
         </p>
 
         {error && <p className="mt-4 text-sm text-rose-400">{error}</p>}
@@ -462,6 +507,128 @@ function ExercisePicker({ exclude, onPick, onClose }) {
             })}
           </ul>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Builds a slot like "two exercises tagged Arms", picked fresh each session. */
+function RuleBuilder({ onAdd, onClose }) {
+  const [count, setCount] = useState(2);
+  const [axes, setAxes] = useState([]);
+  const [picked, setPicked] = useState([]);
+  const [matches, setMatches] = useState(null);
+
+  useEffect(() => {
+    fetchAttributeTypes().then(setAxes).catch(() => {});
+  }, []);
+
+  // Show how many exercises actually satisfy the rule — an empty rule
+  // silently contributes nothing to a workout, which is worth seeing now.
+  useEffect(() => {
+    if (!picked.length) return setMatches(null);
+    fetchExercises({ valueKeys: picked.map((p) => p.key) })
+      .then((rows) => {
+        const keys = picked.map((p) => p.key);
+        setMatches(
+          rows.filter((ex) =>
+            keys.every((k) =>
+              Object.values(ex.attributes).flat().some((v) => v.key === k)
+            )
+          ).length
+        );
+      })
+      .catch(() => setMatches(null));
+  }, [picked]);
+
+  const toggle = (v) =>
+    setPicked((p) =>
+      p.some((x) => x.id === v.id) ? p.filter((x) => x.id !== v.id) : [...p, v]
+    );
+
+  const short = matches !== null && matches < count;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
+      <div className="max-w-lg mx-auto">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">Add a rule</h2>
+          <button onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-200 p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="mt-2 text-sm text-slate-400">
+          A slot that picks its exercises when the session starts, rather than pinning specific
+          ones.
+        </p>
+
+        <div className="mt-6 flex items-center justify-between">
+          <span className="text-[11px] uppercase tracking-[0.25em] text-slate-500">How many</span>
+          <div className="flex items-center gap-3">
+            {[1, 2, 3, 4].map((n) => (
+              <button
+                key={n}
+                onClick={() => setCount(n)}
+                className={`w-11 h-11 border rounded-sm focus:outline-none focus:ring-1 focus:ring-cyan-400
+                            ${count === n
+                              ? "border-cyan-400 text-cyan-300"
+                              : "border-slate-800 text-slate-500 hover:border-slate-600"}`}
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {axes.map((axis) => (
+          <div key={axis.key} className="mt-6">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">{axis.label}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {axis.values.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => toggle(v)}
+                  className={`text-xs border rounded-sm px-2 py-1
+                              focus:outline-none focus:ring-1 focus:ring-cyan-400
+                              ${picked.some((x) => x.id === v.id)
+                                ? "border-cyan-400 text-cyan-300"
+                                : "border-slate-800 text-slate-500 hover:border-slate-600"}`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className="mt-7 border border-slate-800 rounded-sm p-4">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">This rule says</p>
+          <p className="mt-1 text-lg">
+            {count} × {picked.length ? picked.map((p) => p.label).join(" + ") : "any exercise"}
+          </p>
+          {picked.length > 1 && (
+            <p className="mt-1 text-[11px] text-slate-600">
+              Tags combine — an exercise must carry all of them.
+            </p>
+          )}
+          {matches !== null && (
+            <p className={`mt-2 text-xs ${short ? "text-amber-400" : "text-slate-500"}`}>
+              {matches} {matches === 1 ? "exercise matches" : "exercises match"}
+              {short && ` — fewer than the ${count} you asked for, so this slot will come up short`}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={() => onAdd(count, picked)}
+          className="mt-6 w-full bg-cyan-400 text-slate-950 rounded-sm py-3 font-medium
+                     hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400
+                     focus:ring-offset-2 focus:ring-offset-slate-950"
+        >
+          Add this rule
+        </button>
       </div>
     </div>
   );

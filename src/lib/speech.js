@@ -146,29 +146,79 @@ export const RECOGNITION_SUPPORTED =
   typeof window !== "undefined" &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
-/** Maps loose speech to a command. Returns null for anything unrecognised. */
+const WORD_NUMBERS = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
+  nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+  fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, ninety: 90,
+  // Specific before generic: "a couple more" must not match the article "a".
+  couple: 2, an: 1, a: 1,
+};
+
+/** First number in the phrase, digits or words. Null if there isn't one. */
+function numberIn(text) {
+  const digits = text.match(/\b(\d{1,3})\b/);
+  if (digits) return parseInt(digits[1], 10);
+
+  for (const [word, n] of Object.entries(WORD_NUMBERS)) {
+    if (new RegExp(`\\b${word}\\b`).test(text)) return n;
+  }
+  return null;
+}
+
+/**
+ * Maps loose speech to a command. Returns null for anything unrecognised,
+ * which the caller ignores — a false positive mid-workout is worse than a
+ * miss, since it silently logs the wrong number.
+ *
+ * Order matters. "two more reps" must read as an adjustment, not as the
+ * absolute count two, so relative phrasing is tested before bare numbers.
+ */
 export function parseCommand(transcript) {
   const t = transcript.toLowerCase().trim();
 
-  if (/\b(done|finished|complete|next|got it)\b/.test(t)) return { type: "done" };
-  if (/\bskip\b/.test(t)) return { type: "skip" };
-  if (/\bpause\b|\bhold on\b|\bwait\b/.test(t)) return { type: "pause" };
-  if (/\bresume\b|\bcontinue\b|\bgo\b/.test(t)) return { type: "resume" };
-  if (/\brepeat\b|\bagain\b|\bwhat\b/.test(t)) return { type: "repeat" };
-
-  // "twelve reps" / "I did 8" — lets a shortfall be logged without tapping.
-  const digits = t.match(/\b(\d{1,3})\b/);
-  if (digits) return { type: "count", value: parseInt(digits[1], 10) };
-
-  const WORDS = {
-    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
-    nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
-    fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
-    twenty: 20,
-  };
-  for (const [word, n] of Object.entries(WORDS)) {
-    if (new RegExp(`\\b${word}\\b`).test(t)) return { type: "count", value: n };
+  /* --------------------------------------------------------------- control */
+  if (/\b(pause|hold on|wait|stop|hold up|give me a (second|minute)|break)\b/.test(t)) {
+    return { type: "pause" };
   }
+  if (/\b(resume|continue|carry on|keep going|go again|ready|back)\b/.test(t)) {
+    return { type: "resume" };
+  }
+  if (/\b(repeat|again|say (that|it) again|what was that|what)\b/.test(t)) {
+    return { type: "repeat" };
+  }
+  if (/\bskip\b|\bpass\b|\bnot (today|this one)\b/.test(t)) {
+    return { type: "skip" };
+  }
+
+  /* ------------------------------------------------- a longer hold, by voice */
+  // "hold for another twenty" / "give me ten more seconds"
+  if (/\b(hold|keep|stay|another|more time|extend)\b/.test(t) && /\bsecond|\bmore\b/.test(t)) {
+    const n = numberIn(t);
+    if (n) return { type: "extend", seconds: n };
+  }
+
+  /* ------------------------------------------------------------ adjustments */
+  const more = /\b(more|extra|another|added|additional|over|past|beyond)\b/.test(t);
+  const fewer = /\b(fewer|less|short|only did|couldn'?t|stopped at|down|under)\b/.test(t);
+
+  if (more || fewer) {
+    const n = numberIn(t);
+    if (n) return { type: "adjust", delta: fewer ? -n : n };
+    // "a few more" with no number still says which direction.
+    return { type: "adjust", delta: fewer ? -1 : 1 };
+  }
+
+  /* ------------------------------------------------------------- completion */
+  // Checked before bare numbers so "done, twelve" logs twelve and finishes.
+  if (/\b(done|finished|complete|completed|next|got it|that'?s it|end set)\b/.test(t)) {
+    const n = numberIn(t);
+    return n ? { type: "done", value: n } : { type: "done" };
+  }
+
+  /* ------------------------------------------------------- an absolute count */
+  const n = numberIn(t);
+  if (n !== null) return { type: "count", value: n };
 
   return null;
 }

@@ -221,16 +221,48 @@ export default function CoachSession({ workout, onExit, onFinished }) {
 
   const handleCommand = useCallback(
     (cmd) => {
-      if (cmd.type === "pause") return setPaused(true);
-      if (cmd.type === "resume") return setPaused(false);
+      if (cmd.type === "pause") {
+        setPaused(true);
+        speak("Paused.", true);
+        return;
+      }
+      if (cmd.type === "resume") {
+        setPaused(false);
+        speak("Going.", true);
+        return;
+      }
       if (paused) return;
 
       if (cmd.type === "repeat" && step) return speak(announce(step), true);
       if (cmd.type === "skip") return closeOut("skipped");
-      if (cmd.type === "done") return closeOut("voice", repCount);
 
-      // A bare number during a rep set logs a shortfall without tapping.
-      if (cmd.type === "count" && step?.targetType === "reps" && phase === "work") {
+      // "Hold for another twenty" on a timed exercise buys more time by
+      // rewinding the clock rather than restarting the set.
+      if (cmd.type === "extend" && step?.targetType === "time" && phase === "work") {
+        setElapsed((e) => Math.max(0, e - cmd.seconds * 1000));
+        firedRef.current.delete("c3");
+        firedRef.current.delete("c2");
+        firedRef.current.delete("c1");
+        speak(`${cmd.seconds} more.`, true);
+        return;
+      }
+
+      if (cmd.type === "done") {
+        return closeOut("voice", cmd.value ?? repCount);
+      }
+
+      if (step?.targetType !== "reps" || phase !== "work") return;
+
+      // "two more" / "three fewer" adjust; a bare number sets it outright.
+      if (cmd.type === "adjust") {
+        setRepCount((c) => {
+          const next = Math.max(0, (c ?? step.targetValue) + cmd.delta);
+          speak(`${next}.`);
+          return next;
+        });
+        return;
+      }
+      if (cmd.type === "count") {
         setRepCount(cmd.value);
         speak(`${cmd.value}.`);
       }
@@ -420,84 +452,91 @@ export default function CoachSession({ workout, onExit, onFinished }) {
         <p className="mt-3 text-center text-sm text-slate-500">{step.cue}</p>
       )}
 
-      {/* Rep sets: adjust before logging, so a shortfall is recorded honestly. */}
+      {/* Rep sets: adjust before logging, so a shortfall is recorded honestly.
+          Targets are oversized — this gets tapped with a sweaty thumb, at
+          arm's length, sometimes through a sleeve. */}
       {phase === "work" && step.targetType === "reps" && (
-        <div className="mt-6 flex items-center justify-center gap-4">
+        <div className="mt-7 flex items-center justify-center gap-5">
           <button
             onClick={() => setRepCount((c) => Math.max(0, (c ?? step.targetValue) - 1))}
             aria-label="One fewer rep"
-            className="w-10 h-10 border border-slate-700 rounded-sm grid place-items-center
-                       text-slate-400 hover:text-slate-100 hover:border-slate-500
-                       focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            className="w-20 h-20 border-2 border-slate-700 rounded-sm grid place-items-center
+                       text-slate-300 active:bg-slate-800 hover:border-slate-500
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
-            <Minus size={15} />
+            <Minus size={28} />
           </button>
-          <div className="text-center min-w-16">
+          <div className="text-center min-w-20">
             <span
-              className="text-2xl font-semibold"
+              className="text-5xl font-semibold"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {repCount ?? step.targetValue}
             </span>
-            <span className="block text-[11px] uppercase tracking-[0.2em] text-slate-500">
+            <span className="block mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
               reps done
             </span>
           </div>
           <button
             onClick={() => setRepCount((c) => (c ?? step.targetValue) + 1)}
             aria-label="One more rep"
-            className="w-10 h-10 border border-slate-700 rounded-sm grid place-items-center
-                       text-slate-400 hover:text-slate-100 hover:border-slate-500
-                       focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            className="w-20 h-20 border-2 border-slate-700 rounded-sm grid place-items-center
+                       text-slate-300 active:bg-slate-800 hover:border-slate-500
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
-            <Plus size={15} />
+            <Plus size={28} />
           </button>
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-3 gap-3">
+      {/* The primary action is deliberately enormous and alone on its row. */}
+      <button
+        onClick={() => closeOut(phase === "work" ? "tap" : "skipped", repCount)}
+        className="mt-7 w-full bg-cyan-400 text-slate-950 rounded-sm py-7
+                   inline-flex items-center justify-center gap-3 text-xl font-medium
+                   active:bg-cyan-500 hover:bg-cyan-300
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400
+                   focus:ring-offset-2 focus:ring-offset-slate-950"
+      >
+        <Check size={26} />
+        {phase === "work" ? "Set done" : "Start now"}
+      </button>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
         <button
           onClick={() => setPaused((p) => !p)}
-          className="border border-slate-700 rounded-sm py-3 grid place-items-center
-                     text-slate-300 hover:border-slate-500
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400"
-          aria-label={paused ? "Resume" : "Pause"}
+          className="border-2 border-slate-700 rounded-sm py-5
+                     inline-flex items-center justify-center gap-2 text-base text-slate-300
+                     active:bg-slate-800 hover:border-slate-500
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400"
         >
-          {paused ? <Play size={18} /> : <Pause size={18} />}
-        </button>
-
-        <button
-          onClick={() => closeOut(phase === "work" ? "tap" : "skipped", repCount)}
-          className="bg-cyan-400 text-slate-950 rounded-sm py-3 grid place-items-center font-medium
-                     hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400
-                     focus:ring-offset-2 focus:ring-offset-slate-950"
-          aria-label={phase === "work" ? "Mark done" : "Skip ahead"}
-        >
-          <Check size={18} />
+          {paused ? <Play size={20} /> : <Pause size={20} />}
+          {paused ? "Resume" : "Hold"}
         </button>
 
         <button
           onClick={() => closeOut("skipped")}
-          className="border border-slate-700 rounded-sm py-3 grid place-items-center
-                     text-slate-300 hover:border-slate-500
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400"
-          aria-label="Skip this set"
+          className="border-2 border-slate-700 rounded-sm py-5
+                     inline-flex items-center justify-center gap-2 text-base text-slate-300
+                     active:bg-slate-800 hover:border-slate-500
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400"
         >
-          <SkipForward size={18} />
+          <SkipForward size={20} />
+          Skip
         </button>
       </div>
 
       {RECOGNITION_SUPPORTED ? (
         <button
           onClick={toggleListening}
-          className={`mt-4 w-full border rounded-sm py-2.5 inline-flex items-center justify-center gap-2 text-sm
-                      focus:outline-none focus:ring-1 focus:ring-cyan-400
+          className={`mt-3 w-full border-2 rounded-sm py-4 inline-flex items-center justify-center gap-2 text-base
+                      active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-400
                       ${listening
                         ? "border-cyan-400 text-cyan-300"
                         : "border-slate-700 text-slate-400 hover:border-slate-500"}`}
         >
-          {listening ? <Mic size={15} /> : <MicOff size={15} />}
-          {listening ? "Listening — say done, skip, or a number" : "Hands free"}
+          {listening ? <Mic size={20} /> : <MicOff size={20} />}
+          {listening ? "Listening" : "Hands free"}
         </button>
       ) : (
         <p className="mt-4 text-center text-xs text-slate-600">
@@ -506,7 +545,15 @@ export default function CoachSession({ workout, onExit, onFinished }) {
         </p>
       )}
 
-      {paused && <p className="mt-3 text-center text-xs text-slate-500">Paused</p>}
+      {listening && (
+        <p className="mt-2 text-center text-[11px] text-slate-600">
+          "done" · "two more" · "I only did eight" · "hold on" · "skip"
+        </p>
+      )}
+
+      {paused && (
+        <p className="mt-3 text-center text-sm text-slate-500">Paused — say "keep going"</p>
+      )}
     </Screen>
   );
 }

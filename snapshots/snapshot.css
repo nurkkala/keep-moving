@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Vite's root is snapshots/, so Tailwind's automatic detection misses the
+   components themselves. Point it at both. */
+@source "../src";
+@source "../snapshots";
+
+html, body, #root { min-height: 100%; }

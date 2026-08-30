@@ -93,6 +93,16 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   `workout_sequence(workout_id)` for the walked order — it expands sets and
   interleaves them, so the timer never branches on mode. Total work is
   identical either way.
+- **A slot is an exercise OR a rule, never both**, enforced by a check
+  constraint. A rule slot has `pick_count` and tags in `workout_slot_tags`, and
+  resolves at session start via `resolve_workout()` — least-recently-performed
+  first, so "two arm exercises" rotates and favours what's been neglected.
+  `resolve_workout` and `workout_sequence` are **volatile**: two calls give
+  different answers by design. Don't mark them stable.
+- Rule tags are ANDed. Two tags means an exercise must carry both.
+- `workout_summaries.exercise_count` counts what a workout *will* produce
+  (summing `pick_count`); `slot_count` counts the rows. `est_work_sec` covers
+  fixed slots only — rule slots aren't known until resolution.
 - History is a snapshot. `session_items` keeps its own `name` and `kind`, and
   `sessions` keeps `workout_name`, so renaming something doesn't rewrite what
   your history says you did. Don't "fix" this by joining to live rows.
@@ -121,6 +131,17 @@ Two rules follow:
 
 The check also catches a component that exists but nothing imports — that's how
 `ExerciseEditor` was found unwired.
+
+## Screen snapshots
+
+`npm run snapshots` builds `coach-screens.html` — a single self-contained file
+showing every screen side by side, live and interactive. It renders the *real*
+components against `snapshots/mockData.js`, with the data layer swapped by a
+resolveId plugin. The formatting helpers are re-exported from the real module
+rather than copied, so the snapshots can't drift from the app.
+
+Useful for reviewing layout without a database, and for showing someone the
+app without deploying it.
 
 ## Database changes
 

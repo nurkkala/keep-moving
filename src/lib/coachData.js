@@ -380,24 +380,88 @@ export async function fetchWorkoutSequence(workoutId) {
     targetValue: r.target_value,
     cue: r.note || r.instructions || "",
     isLastSet: r.set_number === r.total_sets,
+    // True when a rule slot chose this exercise rather than the user pinning it.
+    fromRule: r.from_rule,
   }));
 }
 
 /**
- * Replaces a workout's exercise list, atomically. Slots hold position and an
- * optional note — the numbers live on the user's target, not here.
+ * A workout's slots for the editor: fixed exercises and rule slots together.
+ * A rule slot has no exercise — it says "pick N with these tags", and which
+ * exercises that means isn't known until a session starts.
+ */
+export async function fetchWorkoutSlots(workoutId) {
+  const { data, error } = await supabase
+    .from("workout_slots")
+    .select("*")
+    .eq("workout_id", workoutId)
+    .order("position");
+
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    isRule: r.is_rule,
+    exerciseId: r.exercise_id,
+    pickCount: r.pick_count,
+    tags: r.tags ?? [],
+    name: r.name,
+    kind: r.kind,
+    targetType: r.target_type,
+    targetValue: r.target_value,
+    sets: r.sets,
+    targetIsPersonal: r.target_is_personal,
+    note: r.note ?? "",
+  }));
+}
+
+/** "2 × Arms" / "1 × Lower back + Strength" */
+export function describeRule(slot) {
+  const labels = (slot.tags ?? []).map((t) => t.label);
+  const what = labels.length ? labels.join(" + ") : "any exercise";
+  return `${slot.pickCount} × ${what}`;
+}
+
+/**
+ * Replaces a workout's slots, atomically. Each is either a fixed exercise or
+ * a rule; the RPC rejects a slot that tries to be both.
  */
 export async function saveWorkoutExercises(workoutId, list) {
-  const items = list.map((slot) => ({
-    exercise_id: slot.exerciseId,
-    note: slot.note || null,
-  }));
+  const items = list.map((slot) =>
+    slot.isRule
+      ? {
+          pick_count: slot.pickCount ?? 1,
+          tag_ids: (slot.tags ?? []).map((t) => t.id),
+          note: slot.note || null,
+        }
+      : { exercise_id: slot.exerciseId, note: slot.note || null }
+  );
 
   const { error } = await supabase.rpc("save_workout_exercises", {
     target_workout: workoutId,
     items,
   });
   if (error) throw error;
+}
+
+/**
+ * What a workout resolves to right now. Rule slots pick their exercises on
+ * each call — least-recently-performed first — so this varies between calls
+ * by design. Use it to preview; the session gets its own resolution.
+ */
+export async function previewWorkout(workoutId) {
+  const { data, error } = await supabase.rpc("resolve_workout", {
+    target_workout: workoutId,
+  });
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    ordinal: r.ordinal,
+    slotId: r.slot_id,
+    exerciseId: r.exercise_id,
+    fromRule: r.from_rule,
+    note: r.note ?? "",
+  }));
 }
 
 /** First run: creates a weekday workout from the shared library. */

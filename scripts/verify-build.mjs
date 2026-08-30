@@ -21,6 +21,7 @@ const SENTINELS = [
   ["target sheet", "Save target"],
   ["exercise detail", "Watch the demonstration"],
   ["history", "Clear saved history"],
+  ["rule builder", "This rule says"],
 ];
 
 let bundle = "";
