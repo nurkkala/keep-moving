@@ -105,8 +105,16 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
             </h2>
             {data && (
               <p className="mt-1 text-sm text-slate-400" style={{ fontVariantNumeric: "tabular-nums" }}>
-                {describeTarget(data, { long: true })}
-                {data.builtIn && <span className="text-slate-600"> · built in</span>}
+                {describeTarget(
+                  {
+                    targetType: data.suggestedType,
+                    targetValue: data.suggestedValue,
+                    sets: data.suggestedSets,
+                  },
+                  { long: true }
+                )}
+                <span className="text-slate-600"> suggested</span>
+                {data.builtIn && <span className="text-slate-600"> · shared</span>}
               </p>
             )}
           </div>

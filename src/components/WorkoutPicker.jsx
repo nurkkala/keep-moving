@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Calendar, AlertCircle } from "lucide-react";
+import { ChevronLeft, Calendar, Repeat, AlertCircle } from "lucide-react";
 import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
   describeDays,
   describeTarget,
+  describeOrderMode,
 } from "../lib/coachData";
 import ExerciseDetail from "./ExerciseDetail";
 
@@ -138,6 +139,11 @@ function WorkoutCard({ workout, highlight, onOpen }) {
         <span className="inline-flex items-center gap-1">
           <Calendar size={11} /> {describeDays(workout.days)}
         </span>
+        {workout.orderMode === "circuit" && (
+          <span className="inline-flex items-center gap-1">
+            <Repeat size={11} /> {describeOrderMode(workout.orderMode)}
+          </span>
+        )}
       </div>
     </button>
   );
@@ -180,7 +186,7 @@ function WorkoutDetail({ workout, onBack, onStart }) {
         )}
         <p className="mt-2 text-xs text-slate-500">
           {describeDays(workout.days)} · {workout.exerciseCount} exercises ·{" "}
-          {minutes(workout.estWorkSec)}
+          {minutes(workout.estWorkSec)} · {describeOrderMode(workout.orderMode)}
         </p>
 
         {loading ? (
@@ -204,11 +210,13 @@ function WorkoutDetail({ workout, onBack, onStart }) {
                       )}
                     </span>
                     <span
-                      className="text-sm text-slate-400 shrink-0"
+                      className={`text-sm shrink-0 ${
+                        ex.targetIsPersonal ? "text-slate-400" : "text-slate-600 italic"
+                      }`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
+                      title={ex.targetIsPersonal ? "Your target" : "Suggested — you haven't set a target"}
                     >
                       {describeTarget(ex)}
-                      {ex.sets > 1 && <span className="text-slate-600"> ·{ex.sets}</span>}
                     </span>
                   </button>
                 </li>

@@ -19,7 +19,7 @@ async function requireUser() {
 
 const EXERCISE_SELECT = `
   id, user_id, name, description, instructions, video_url, kind,
-  target_type, target_value,
+  suggested_type, suggested_value, suggested_sets,
   tags:exercise_attributes (
     value:attribute_values ( id, key, label, type:attribute_types ( key, label ) )
   )
@@ -47,9 +47,11 @@ function shapeExercise(row) {
     description: row.description ?? "",
     instructions: row.instructions ?? "",
     videoUrl: row.video_url ?? null,
-    // One target, one unit. "45 seconds" or "12 reps", never both.
-    targetType: row.target_type,
-    target: row.target_value,
+    // The library's recommendation for someone who has never done this —
+    // NOT anyone's target. A user's target lives in exercise_targets.
+    suggestedType: row.suggested_type,
+    suggestedValue: row.suggested_value,
+    suggestedSets: row.suggested_sets,
     builtIn: row.user_id === null,
     attributes,
   };
@@ -116,8 +118,9 @@ export async function createExercise(ex, valueIds = []) {
       description: ex.description || null,
       instructions: ex.instructions || null,
       video_url: ex.videoUrl || null,
-      target_type: ex.targetType,
-      target_value: ex.target,
+      suggested_type: ex.suggestedType,
+      suggested_value: ex.suggestedValue,
+      suggested_sets: ex.suggestedSets ?? 1,
     })
     .select("id")
     .single();
@@ -136,8 +139,9 @@ export async function updateExercise(id, patch) {
   if ("description" in patch) row.description = patch.description || null;
   if ("instructions" in patch) row.instructions = patch.instructions || null;
   if ("videoUrl" in patch) row.video_url = patch.videoUrl || null;
-  if ("targetType" in patch) row.target_type = patch.targetType;
-  if ("target" in patch) row.target_value = patch.target;
+  if ("suggestedType" in patch) row.suggested_type = patch.suggestedType;
+  if ("suggestedValue" in patch) row.suggested_value = patch.suggestedValue;
+  if ("suggestedSets" in patch) row.suggested_sets = patch.suggestedSets;
 
   const { error } = await supabase.from("exercises").update(row).eq("id", id);
   if (error) throw error;
@@ -207,14 +211,24 @@ export async function createAttributeValue(typeId, key, label) {
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /**
- * A target rendered for reading: "45s" / "12×", or long form "45 seconds".
- * Hold times and per-side counts are cues, not targets — they live in the
- * exercise's instructions and get spoken, not measured.
+ * A target rendered for reading: "45s", "12× · 3 sets", or long form
+ * "45 seconds". Hold times and per-side counts are cues, not targets — they
+ * live in the exercise's instructions and get spoken, not measured.
  */
-export function describeTarget({ targetType, target }, { long = false } = {}) {
-  if (target == null) return "";
-  if (targetType === "time") return long ? `${target} seconds` : `${target}s`;
-  return long ? `${target} reps` : `${target}×`;
+export function describeTarget({ targetType, targetValue, sets = 1 }, { long = false } = {}) {
+  if (targetValue == null) return "";
+
+  const one = targetType === "time"
+    ? (long ? `${targetValue} seconds` : `${targetValue}s`)
+    : (long ? `${targetValue} reps` : `${targetValue}×`);
+
+  if (!sets || sets <= 1) return one;
+  return long ? `${one}, ${sets} sets` : `${one} · ${sets} sets`;
+}
+
+/** "All sets together" vs "One set of each, in rotation". */
+export function describeOrderMode(mode) {
+  return mode === "circuit" ? "Circuit" : "Straight sets";
 }
 
 /** "Mon, Wed, Fri" · "Every day" · "Not scheduled" */
@@ -238,6 +252,7 @@ function shapeWorkout(w) {
     description: w.description ?? "",
     days: w.days_of_week ?? [],
     daysLabel: describeDays(w.days_of_week ?? []),
+    orderMode: w.order_mode ?? "straight",
     restSec: w.rest_sec ?? null,
     position: w.position,
     exerciseCount: w.exercise_count ?? 0,
@@ -277,6 +292,7 @@ export async function createWorkout(workout) {
       name: workout.name,
       description: workout.description || null,
       days_of_week: workout.days ?? [],
+      order_mode: workout.orderMode ?? "straight",
       rest_sec: workout.restSec ?? null,
       position: workout.position ?? 0,
     })
@@ -292,6 +308,7 @@ export async function updateWorkout(id, patch) {
   if ("name" in patch) row.name = patch.name;
   if ("description" in patch) row.description = patch.description || null;
   if ("days" in patch) row.days_of_week = patch.days;
+  if ("orderMode" in patch) row.order_mode = patch.orderMode;
   if ("restSec" in patch) row.rest_sec = patch.restSec ?? null;
   if ("position" in patch) row.position = patch.position;
 
@@ -306,7 +323,11 @@ export async function deleteWorkout(id) {
 
 /* ------------------------------------------- the exercises inside a workout */
 
-/** One workout's list, with overrides already resolved by the database. */
+/**
+ * A workout's exercises, one row per exercise, with each user's own target
+ * resolved in (falling back to the library's suggestion where they haven't
+ * set one). This is the editor's view of a workout.
+ */
 export async function fetchWorkoutExercises(workoutId) {
   const { data, error } = await supabase
     .from("workout_exercises_resolved")
@@ -322,31 +343,53 @@ export async function fetchWorkoutExercises(workoutId) {
     name: r.name,
     kind: r.kind,
     targetType: r.target_type,
-    target: r.target_value,
-    sets: r.sets ?? 1,
+    targetValue: r.target_value,
+    sets: r.sets,
     description: r.description ?? "",
     // The coach speaks `cue`: the slot's own note if it has one, otherwise
     // the exercise's instructions.
     cue: r.note || r.instructions || "",
     note: r.note ?? "",
     videoUrl: r.video_url ?? null,
-    // Null here means "tracking the exercise default" — useful in the editor.
-    overrideType: r.override_type,
-    overrideTarget: r.override_value,
+    // False means this is still the library's suggestion, not a target the
+    // user has chosen — worth showing differently in an editor.
+    targetIsPersonal: r.target_is_personal,
+    targetSetAt: r.target_set_at ?? null,
   }));
 }
 
 /**
- * Replaces a workout's exercise list, atomically. Only overrides are stored —
- * leave them null and the slot tracks the exercise's defaults.
+ * The sequence the coach actually walks: one entry per SET, already ordered
+ * for the workout's mode. Straight sets finish an exercise before moving on;
+ * a circuit rotates. The timer just iterates this and never branches on mode.
+ */
+export async function fetchWorkoutSequence(workoutId) {
+  const { data, error } = await supabase.rpc("workout_sequence", {
+    target_workout: workoutId,
+  });
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    ordinal: r.ordinal,
+    setNumber: r.set_number,
+    totalSets: r.total_sets,
+    exerciseId: r.exercise_id,
+    name: r.name,
+    kind: r.kind,
+    targetType: r.target_type,
+    targetValue: r.target_value,
+    cue: r.note || r.instructions || "",
+    isLastSet: r.set_number === r.total_sets,
+  }));
+}
+
+/**
+ * Replaces a workout's exercise list, atomically. Slots hold position and an
+ * optional note — the numbers live on the user's target, not here.
  */
 export async function saveWorkoutExercises(workoutId, list) {
   const items = list.map((slot) => ({
     exercise_id: slot.exerciseId,
-    // Both or neither: a unit without a number is rejected by the database.
-    target_type: slot.overrideType ?? null,
-    target_value: slot.overrideTarget ?? null,
-    sets: slot.sets && slot.sets > 1 ? slot.sets : null,
     note: slot.note || null,
   }));
 
@@ -368,49 +411,185 @@ export async function fetchOrSeedWorkouts() {
   return fetchWorkouts();
 }
 
-/* ==================================================================== history */
+/* ==================================================================== targets */
 
-export async function fetchHistory(limit = 40) {
+/**
+ * What this user is aiming for on a given exercise. One row per exercise —
+ * a target is current state, not a log. The record of what you actually did
+ * lives in session history, which is where progression is read from.
+ */
+export async function fetchTargets() {
   const { data, error } = await supabase
-    .from("sessions")
-    .select(
-      "id, performed_at, total_sec, workout_id, workout_name, session_items ( name, kind, actual_sec, skipped, position, exercise_id )"
-    )
-    .order("performed_at", { ascending: false })
-    .order("position", { referencedTable: "session_items", ascending: true })
-    .limit(limit);
+    .from("exercise_targets")
+    .select("exercise_id, target_type, target_value, sets, note, updated_at");
 
   if (error) throw error;
 
-  return (data ?? []).map((s) => ({
+  return Object.fromEntries(
+    (data ?? []).map((t) => [
+      t.exercise_id,
+      {
+        targetType: t.target_type,
+        targetValue: t.target_value,
+        sets: t.sets,
+        note: t.note ?? "",
+        updatedAt: t.updated_at,
+      },
+    ])
+  );
+}
+
+/** Sets or changes a target. Upserts — one target per exercise. */
+export async function setExerciseTarget(exerciseId, { targetType, targetValue, sets = 1, note = null }) {
+  const { error } = await supabase.rpc("set_exercise_target", {
+    target_exercise: exerciseId,
+    new_type: targetType,
+    new_value: targetValue,
+    new_sets: sets,
+    new_note: note,
+  });
+  if (error) throw error;
+}
+
+/** Reverts to the library's suggestion by removing the personal target. */
+export async function clearExerciseTarget(exerciseId) {
+  const { error } = await supabase
+    .from("exercise_targets")
+    .delete()
+    .eq("exercise_id", exerciseId);
+  if (error) throw error;
+}
+
+/* ==================================================================== history */
+
+/**
+ * Past sessions, newest first. Session items are stored one per SET, so this
+ * rolls them up per exercise — the resolution a history list wants. Use
+ * fetchPerformanceHistory for the set-by-set detail.
+ */
+export async function fetchHistory(limit = 40) {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("id, performed_at, total_sec, workout_id, workout_name, order_mode")
+    .order("performed_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  if (!data?.length) return [];
+
+  // One follow-up query for the whole page rather than one per session.
+  const { data: totals, error: totalsError } = await supabase
+    .from("session_exercise_totals")
+    .select("*")
+    .in("session_id", data.map((s) => s.id))
+    .order("first_position");
+
+  if (totalsError) throw totalsError;
+
+  const bySession = new Map();
+  for (const t of totals ?? []) {
+    if (!bySession.has(t.session_id)) bySession.set(t.session_id, []);
+    bySession.get(t.session_id).push({
+      exerciseId: t.exercise_id,
+      name: t.name,
+      kind: t.kind,
+      targetType: t.target_type,
+      targetValue: t.target_value,
+      targetSets: t.target_sets,
+      setsDone: t.sets_done,
+      totalValue: t.total_value,
+      bestSet: t.best_set,
+      totalSec: t.total_sec,
+      metEverySet: t.met_every_set,
+    });
+  }
+
+  return data.map((s) => ({
     id: s.id,
     at: new Date(s.performed_at).getTime(),
     totalSec: s.total_sec,
     workoutId: s.workout_id,
-    // Snapshot of the name at the time, so a renamed workout doesn't rewrite
-    // what your history says you did.
+    // Snapshots taken at the time, so renaming a workout or switching its
+    // mode doesn't rewrite what your history says you did.
     workoutName: s.workout_name ?? null,
-    items: (s.session_items ?? []).map((it) => ({
-      name: it.name,
-      kind: it.kind,
-      actual: it.actual_sec,
-      skipped: it.skipped,
-      exerciseId: it.exercise_id,
-    })),
+    orderMode: s.order_mode ?? null,
+    items: bySession.get(s.id) ?? [],
   }));
 }
 
 /**
- * Writes a finished session and its items together. Name and kind are stored
- * as a snapshot, so renaming or deleting an exercise later doesn't rewrite
- * what happened.
+ * Set-by-set detail for one exercise over time — the shape a progress chart
+ * wants. Each row carries the target as it stood that day, so raising a
+ * target never turns a past success into a shortfall.
  */
-export async function saveSession({ totalSec, items, workoutId = null }) {
+export async function fetchPerformanceHistory(exerciseId, limit = 200) {
+  const { data, error } = await supabase
+    .from("performance_history")
+    .select("*")
+    .eq("exercise_id", exerciseId)
+    .order("performed_at", { ascending: false })
+    .order("position", { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+
+  return (data ?? []).map((r) => ({
+    sessionId: r.session_id,
+    at: new Date(r.performed_at).getTime(),
+    workoutName: r.workout_name,
+    orderMode: r.order_mode,
+    setNumber: r.set_number,
+    targetType: r.target_type,
+    targetValue: r.target_value,
+    targetSets: r.target_sets,
+    actualValue: r.actual_value,
+    actualSec: r.actual_sec,
+    skipped: r.skipped,
+    how: r.how,
+    metTarget: r.met_target,
+  }));
+}
+
+/** Personal bests, drawn from what was done — they survive a target change. */
+export async function fetchBests() {
+  const { data, error } = await supabase.from("exercise_bests").select("*");
+  if (error) throw error;
+
+  return Object.fromEntries(
+    (data ?? []).map((b) => [
+      b.exercise_id,
+      {
+        name: b.name,
+        targetType: b.target_type,
+        bestSet: b.best_set,
+        setsPerformed: b.sets_performed,
+        timesPerformed: b.times_performed,
+        lastPerformed: b.last_performed ? new Date(b.last_performed).getTime() : null,
+      },
+    ])
+  );
+}
+
+/**
+ * Writes a finished session. `items` is one entry per SET, in the order they
+ * were performed — which in a circuit interleaves exercises.
+ *
+ * Name, kind, and the target are snapshotted per set, so history stays
+ * truthful after an exercise is renamed or a target is raised.
+ */
+export async function saveSession({ totalSec, items, workoutId = null, orderMode = null }) {
   const payload = items.map((it) => ({
     exercise_id: it.exerciseId ?? null,
     name: it.name,
     kind: it.kind,
-    actual: Math.round(it.actual ?? 0),
+    set_number: it.setNumber ?? 1,
+    target_type: it.targetType ?? null,
+    target_value: it.targetValue ?? null,
+    target_sets: it.targetSets ?? null,
+    // Performance in the target's unit: reps completed, or seconds held.
+    actual_value: it.actualValue ?? null,
+    // Wall-clock time on this set, whatever the unit.
+    actual: Math.round(it.actualSec ?? 0),
     skipped: !!it.skipped,
     how: it.how ?? null,
   }));
@@ -419,10 +598,11 @@ export async function saveSession({ totalSec, items, workoutId = null }) {
     total_sec: Math.round(totalSec),
     items: payload,
     target_workout: workoutId,
+    mode: orderMode,
   });
   if (error) throw error;
 
-  return { id: newId, at: Date.now(), totalSec: Math.round(totalSec), items: payload };
+  return { id: newId, at: Date.now(), totalSec: Math.round(totalSec) };
 }
 
 export async function deleteSession(id) {
