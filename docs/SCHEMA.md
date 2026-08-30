@@ -39,6 +39,12 @@ Scheduling lives on the workout rather than in a separate table because the
 shape is fixed and small. If recurrence ever gets richer than "these weekdays" —
 alternating weeks, every third day — that's the point to move it out.
 
+Missed days are not tracked. There's no rollover column and no "expected
+session" row to compare against, which is deliberate: a skipped Monday leaves
+no trace and creates no debt. Adherence reporting would need a source of
+expected sessions that doesn't currently exist — that's the cost of the
+simplicity, and it was accepted knowingly.
+
 `starts_on` / `ends_on` are for programs with a defined run: a six-week
 post-op protocol expires on its own rather than sitting in the list forever.
 `rest_sec` on a workout overrides the global preference, since a strength

@@ -21,6 +21,27 @@ because two near-synonyms meaning different things caused real confusion. One
 migration filename still contains it (`20260830192707_save_routine_by_exercise_ref`)
 because renaming it would break migration history — leave it alone.
 
+## Scheduling: decided
+
+Fixed weekdays, attached to workouts, no makeup. This was chosen deliberately
+over frequency targets, every-N-days intervals, and rotating cycles.
+
+- `workouts.days_of_week` is the whole model. Exercises are never scheduled;
+  only workouts are.
+- **A missed day is simply gone.** There is no rollover, no makeup queue, no
+  "overdue" state, and no missed-day record in history. If today's workout
+  isn't done, tomorrow shows tomorrow's workout and nothing else.
+- Do not add streak counters, adherence percentages, or catch-up prompts. The
+  point of no-makeup is that missing a day costs nothing and creates no debt.
+- An empty `days_of_week` is valid and means on-demand: the workout exists and
+  can be started any time, but never appears under "Today."
+- Several workouts may share a day. They render in `position` order.
+
+If frequency targets ("3× a week") are ever wanted, that's a `target_per_week`
+column plus a weekly count against `sessions` — additive, not a rewrite. Doing
+it would reopen the makeup question, so treat it as a product decision rather
+than a refactor.
+
 ## Architecture
 
 `src/lib/coachData.js` is the only file that talks to Supabase. Components call
