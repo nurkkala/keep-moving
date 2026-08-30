@@ -1,9 +1,169 @@
 @import "tailwindcss";
 
-/* The coach is used propped up on a floor or a mat — dark by default,
-   and never bouncing when a sheet opens. */
+/* Dark is a class on <html>, not a media query, because the user can override
+   the system. The inline script in index.html sets it before first paint. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Every colour in the app resolves through one of these. `inline` makes the
+   utilities emit var(--t-*) rather than baking a value at build time, which is
+   what lets a single class flip themes.
+
+   The dark column is the palette the app already shipped, so switching to
+   tokens changed nothing on screen. Light is the same ramp inverted. */
+@theme inline {
+  --color-canvas: var(--t-canvas);
+  --color-surface: var(--t-surface);
+  --color-surface-hi: var(--t-surface-hi);
+  --color-track: var(--t-track);
+
+  --color-ink: var(--t-ink);
+  --color-ink-soft: var(--t-ink-soft);
+  --color-ink-dim: var(--t-ink-dim);
+  --color-muted: var(--t-muted);
+  --color-subtle: var(--t-subtle);
+  --color-faint: var(--t-faint);
+  --color-ghost: var(--t-ghost);
+  --color-on-accent: var(--t-on-accent);
+
+  --color-line: var(--t-line);
+  --color-line-hi: var(--t-line-hi);
+  --color-line-hi2: var(--t-line-hi2);
+  --color-line-hi3: var(--t-line-hi3);
+
+  --color-accent: var(--t-accent);
+  --color-accent-hi: var(--t-accent-hi);
+  --color-accent-lo: var(--t-accent-lo);
+  --color-accent-soft: var(--t-accent-soft);
+  --color-accent-deep: var(--t-accent-deep);
+
+  --color-danger: var(--t-danger);
+  --color-danger-hi: var(--t-danger-hi);
+  --color-danger-deep: var(--t-danger-deep);
+
+  --color-warn: var(--t-warn);
+  --color-warn-hi: var(--t-warn-hi);
+  --color-warn-edge: var(--t-warn-edge);
+  --color-warn-deep: var(--t-warn-deep);
+  --color-warn-bg: var(--t-warn-bg);
+
+  /* `kind` is the exercise's own colour and has nothing to do with severity —
+     cardio being rose doesn't make it an error. Kept as its own scale so the
+     two can't drift into each other. */
+  --color-kind-stretch: var(--t-kind-stretch);
+  --color-kind-stretch-hi: var(--t-kind-stretch-hi);
+  --color-kind-strength: var(--t-kind-strength);
+  --color-kind-strength-hi: var(--t-kind-strength-hi);
+  --color-kind-core: var(--t-kind-core);
+  --color-kind-core-hi: var(--t-kind-core-hi);
+  --color-kind-cardio: var(--t-kind-cardio);
+  --color-kind-cardio-hi: var(--t-kind-cardio-hi);
+}
+
+/* Light. Text darkens as the ramp inverts, so `subtle` and `line-hi3` sit at
+   the same slate step in both themes — the midpoint doesn't need to move. */
+:root {
+  --t-canvas: var(--color-slate-50);
+  --t-surface: #fff;
+  --t-surface-hi: var(--color-slate-100);
+  --t-track: var(--color-slate-300);
+
+  --t-ink: var(--color-slate-900);
+  --t-ink-soft: var(--color-slate-800);
+  --t-ink-dim: var(--color-slate-700);
+  --t-muted: var(--color-slate-600);
+  --t-subtle: var(--color-slate-500);
+  --t-faint: var(--color-slate-400);
+  --t-ghost: var(--color-slate-300);
+  --t-on-accent: #fff;
+
+  --t-line: var(--color-slate-200);
+  --t-line-hi: var(--color-slate-300);
+  --t-line-hi2: var(--color-slate-400);
+  --t-line-hi3: var(--color-slate-500);
+
+  /* A step darker than a straight inversion would give. On a light canvas the
+     fill carries white text, and cyan-600 only reached 3.6:1 — cyan-700 gets
+     the primary button to 5.28:1. Same reason rose-700 for error text. */
+  --t-accent: var(--color-cyan-700);
+  --t-accent-hi: var(--color-cyan-800);
+  --t-accent-lo: var(--color-cyan-800);
+  --t-accent-soft: var(--color-cyan-900);
+  --t-accent-deep: var(--color-cyan-200);
+
+  --t-danger: var(--color-rose-700);
+  --t-danger-hi: var(--color-rose-800);
+  --t-danger-deep: var(--color-rose-200);
+
+  --t-warn: var(--color-amber-600);
+  --t-warn-hi: var(--color-amber-700);
+  --t-warn-edge: var(--color-amber-300);
+  --t-warn-deep: var(--color-amber-200);
+  --t-warn-bg: var(--color-amber-50);
+
+  --t-kind-stretch: var(--color-cyan-600);
+  --t-kind-stretch-hi: var(--color-cyan-700);
+  --t-kind-strength: var(--color-orange-600);
+  --t-kind-strength-hi: var(--color-orange-700);
+  --t-kind-core: var(--color-violet-600);
+  --t-kind-core-hi: var(--color-violet-700);
+  --t-kind-cardio: var(--color-rose-600);
+  --t-kind-cardio-hi: var(--color-rose-700);
+}
+
+/* Dark — the palette the app shipped with. */
+.dark {
+  --t-canvas: var(--color-slate-950);
+  --t-surface: var(--color-slate-900);
+  --t-surface-hi: var(--color-slate-800);
+  --t-track: var(--color-slate-600);
+
+  --t-ink: var(--color-slate-100);
+  --t-ink-soft: var(--color-slate-200);
+  --t-ink-dim: var(--color-slate-300);
+  --t-muted: var(--color-slate-400);
+  --t-subtle: var(--color-slate-500);
+  --t-faint: var(--color-slate-600);
+  --t-ghost: var(--color-slate-700);
+  --t-on-accent: var(--color-slate-950);
+
+  --t-line: var(--color-slate-800);
+  --t-line-hi: var(--color-slate-700);
+  --t-line-hi2: var(--color-slate-600);
+  --t-line-hi3: var(--color-slate-500);
+
+  --t-accent: var(--color-cyan-400);
+  --t-accent-hi: var(--color-cyan-300);
+  --t-accent-lo: var(--color-cyan-500);
+  --t-accent-soft: var(--color-cyan-200);
+  --t-accent-deep: var(--color-cyan-900);
+
+  --t-danger: var(--color-rose-400);
+  --t-danger-hi: var(--color-rose-300);
+  --t-danger-deep: var(--color-rose-900);
+
+  --t-warn: var(--color-amber-400);
+  --t-warn-hi: var(--color-amber-300);
+  --t-warn-edge: var(--color-amber-800);
+  --t-warn-deep: var(--color-amber-900);
+  --t-warn-bg: var(--color-amber-950);
+
+  --t-kind-stretch: var(--color-cyan-400);
+  --t-kind-stretch-hi: var(--color-cyan-300);
+  --t-kind-strength: var(--color-orange-400);
+  --t-kind-strength-hi: var(--color-orange-300);
+  --t-kind-core: var(--color-violet-400);
+  --t-kind-core-hi: var(--color-violet-300);
+  --t-kind-cardio: var(--color-rose-400);
+  --t-kind-cardio-hi: var(--color-rose-300);
+}
+
+/* Used propped up on a floor or a mat — never bouncing when a sheet opens. */
 html, body, #root { min-height: 100%; }
-body { overscroll-behavior-y: none; }
+body { overscroll-behavior-y: none; background: var(--t-canvas); }
+
+/* Native controls and the URL bar should match the chosen theme, not the OS. */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

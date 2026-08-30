@@ -1,5 +1,5 @@
 /**
- * Every read and write the coach needs, in the shapes the component uses.
+ * Every read and write the app needs, in the shapes the component uses.
  * Nothing here knows about React; nothing in the component needs to know
  * about Postgres.
  *
@@ -832,12 +832,13 @@ export async function fetchAlternatives(exerciseId, want = 3) {
 
 const PREF_DEFAULTS = {
   voiceURI: null, voiceName: null, rate: 1, restSec: 15, distanceUnit: "mi",
+  theme: "system",
 };
 
 export async function fetchPrefs() {
   const { data, error } = await supabase
     .from("preferences")
-    .select("voice_uri, voice_name, rate, rest_sec, distance_unit")
+    .select("voice_uri, voice_name, rate, rest_sec, distance_unit, theme")
     .maybeSingle();
 
   if (error) throw error;
@@ -849,6 +850,7 @@ export async function fetchPrefs() {
     rate: Number(data.rate),
     restSec: data.rest_sec,
     distanceUnit: data.distance_unit ?? "mi",
+    theme: data.theme ?? "system",
   };
 }
 
@@ -862,6 +864,7 @@ export async function savePrefs(partial) {
   if ("rate" in partial) row.rate = partial.rate;
   if ("restSec" in partial) row.rest_sec = partial.restSec;
   if ("distanceUnit" in partial) row.distance_unit = partial.distanceUnit;
+  if ("theme" in partial) row.theme = partial.theme;
 
   const { error } = await supabase.from("preferences").upsert(row, { onConflict: "user_id" });
   if (error) throw error;

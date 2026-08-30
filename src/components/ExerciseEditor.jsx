@@ -3,7 +3,7 @@ import { X, Trash2 } from "lucide-react";
 import {
   createExercise, updateExercise, deleteExercise, setExerciseTags,
   fetchAttributeTypes,
-} from "../lib/coachData";
+} from "../lib/data";
 
 const KINDS = [
   { v: "stretch", label: "Stretch" },
@@ -111,11 +111,11 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
               {isNew ? "New exercise" : "Edit exercise"}
             </p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -125,7 +125,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-slate-500 hover:text-slate-200 p-1 rounded-sm focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            className="text-subtle hover:text-ink-soft p-1 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent"
           >
             <X size={18} />
           </button>
@@ -141,17 +141,17 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         </Field>
 
         <div className="mt-5">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Category</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-subtle">Category</span>
           <div className="mt-1.5 grid grid-cols-4 gap-1.5">
             {KINDS.map((k) => (
               <button
                 key={k.v}
                 onClick={() => setKind(k.v)}
                 className={`border rounded-sm py-1.5 text-xs
-                            focus:outline-none focus:ring-1 focus:ring-cyan-400
+                            focus:outline-none focus:ring-1 focus:ring-accent
                             ${kind === k.v
-                              ? "border-cyan-400 text-cyan-300"
-                              : "border-slate-800 text-slate-500 hover:border-slate-600"}`}
+                              ? "border-accent text-accent-hi"
+                              : "border-line text-subtle hover:border-line-hi2"}`}
               >
                 {k.label}
               </button>
@@ -168,7 +168,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
             className={inputClass}
           />
         </Field>
-        <p className="mt-1 text-[11px] text-slate-600">
+        <p className="mt-1 text-[11px] text-faint">
           Hold times and per-side counts go here, not in the numbers below — the coach speaks them
           and doesn't count them.
         </p>
@@ -193,10 +193,10 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         </Field>
 
         {/* --------------------------------------------------- suggestion */}
-        <p className="mt-7 text-[11px] uppercase tracking-[0.25em] text-slate-500">
+        <p className="mt-7 text-[11px] uppercase tracking-[0.25em] text-subtle">
           Suggested starting point
         </p>
-        <p className="mt-1 text-[11px] text-slate-600">
+        <p className="mt-1 text-[11px] text-faint">
           What a newcomer should try. Not your target — set that separately.
         </p>
 
@@ -209,10 +209,10 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
             <button
               key={t.v}
               onClick={() => setSuggestedType(t.v)}
-              className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400
+              className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent
                           ${suggestedType === t.v
-                            ? "border-cyan-400 text-cyan-300"
-                            : "border-slate-800 text-slate-400 hover:border-slate-600"}`}
+                            ? "border-accent text-accent-hi"
+                            : "border-line text-muted hover:border-line-hi2"}`}
             >
               {t.label}
             </button>
@@ -221,7 +221,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
+            <span className="text-[11px] uppercase tracking-[0.2em] text-subtle">
               {suggestedType === "time"
                 ? "Seconds"
                 : suggestedType === "distance"
@@ -238,7 +238,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
             />
           </label>
           <label className="block">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Sets</span>
+            <span className="text-[11px] uppercase tracking-[0.2em] text-subtle">Sets</span>
             <input
               type="number"
               min="1"
@@ -254,9 +254,9 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         {/* --------------------------------------------------------- tags */}
         {axes.map((axis) => (
           <div key={axis.key} className="mt-6">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
               {axis.label}
-              {!axis.multiValued && <span className="text-slate-700"> · pick one</span>}
+              {!axis.multiValued && <span className="text-ghost"> · pick one</span>}
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {axis.values.map((v) => (
@@ -264,10 +264,10 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
                   key={v.id}
                   onClick={() => toggleTag(axis, v.id)}
                   className={`text-xs border rounded-sm px-2 py-0.5
-                              focus:outline-none focus:ring-1 focus:ring-cyan-400
+                              focus:outline-none focus:ring-1 focus:ring-accent
                               ${selected.has(v.id)
-                                ? "border-cyan-400 text-cyan-300"
-                                : "border-slate-800 text-slate-500 hover:border-slate-600"}`}
+                                ? "border-accent text-accent-hi"
+                                : "border-line text-subtle hover:border-line-hi2"}`}
                 >
                   {v.label}
                 </button>
@@ -276,14 +276,14 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
           </div>
         ))}
 
-        {error && <p className="mt-5 text-sm text-rose-400">{error}</p>}
+        {error && <p className="mt-5 text-sm text-danger">{error}</p>}
 
         <button
           onClick={save}
           disabled={busy}
-          className="mt-7 w-full bg-cyan-400 text-slate-950 rounded-sm py-3 font-medium
-                     hover:bg-cyan-300 disabled:opacity-50
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+          className="mt-7 w-full bg-accent text-on-accent rounded-sm py-3 font-medium
+                     hover:bg-accent-hi disabled:opacity-50
+                     focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-canvas"
         >
           {busy ? "Saving…" : isNew ? "Create exercise" : "Save changes"}
         </button>
@@ -293,7 +293,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
             onClick={remove}
             disabled={busy}
             className="mt-4 w-full inline-flex items-center justify-center gap-1.5 text-xs
-                       text-slate-600 hover:text-rose-400 disabled:opacity-50"
+                       text-faint hover:text-danger disabled:opacity-50"
           >
             <Trash2 size={12} /> Delete this exercise
           </button>
@@ -304,13 +304,13 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
 }
 
 const inputClass =
-  "mt-1 w-full bg-slate-900 border border-slate-700 rounded-sm px-3 py-2 text-sm " +
-  "placeholder:text-slate-700 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400";
+  "mt-1 w-full bg-surface border border-line-hi rounded-sm px-3 py-2 text-sm " +
+  "placeholder:text-ghost focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent";
 
 function Field({ label, children }) {
   return (
     <label className="block mt-5">
-      <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{label}</span>
+      <span className="text-[11px] uppercase tracking-[0.2em] text-subtle">{label}</span>
       {children}
     </label>
   );

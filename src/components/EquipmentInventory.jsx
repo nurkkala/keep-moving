@@ -3,7 +3,7 @@ import { ChevronLeft, Check, Ruler } from "lucide-react";
 import {
   fetchEquipment, setEquipmentOwned, fetchAvailability,
   fetchPrefs, savePrefs,
-} from "../lib/coachData";
+} from "../lib/data";
 
 /**
  * What the user owns. Marking a thing owned is what turns "you can't do this"
@@ -76,28 +76,28 @@ export default function EquipmentInventory({ onBack }) {
   const blocked = Object.values(availability).filter((a) => !a.canDo).length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-200
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm"
+          className="inline-flex items-center gap-1 text-sm text-subtle hover:text-ink-soft
+                     focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
         >
           <ChevronLeft size={15} /> Today
         </button>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">Equipment</h1>
-        <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+        <p className="mt-2 text-sm text-muted leading-relaxed">
           What you have to hand. Exercises needing anything you don't own are flagged rather than
           hidden — you might borrow a band.
         </p>
 
-        {loading && <p className="mt-6 text-sm text-slate-500">Loading…</p>}
-        {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
+        {loading && <p className="mt-6 text-sm text-subtle">Loading…</p>}
+        {error && <p className="mt-6 text-sm text-danger">{error}</p>}
 
         {!loading && (
           <>
-            <ul className="mt-7 divide-y divide-slate-800 border-y border-slate-800">
+            <ul className="mt-7 divide-y divide-line border-y border-line">
               {items.map((item) => {
                 const unlocks = unlockCount(item.label);
                 return (
@@ -107,22 +107,22 @@ export default function EquipmentInventory({ onBack }) {
                       disabled={saving === item.id}
                       aria-pressed={item.owned}
                       className="w-full text-left py-4 flex items-center gap-4
-                                 hover:bg-slate-900/60 disabled:opacity-60
-                                 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                                 hover:bg-surface/60 disabled:opacity-60
+                                 focus:outline-none focus:ring-1 focus:ring-accent"
                     >
                       <span
                         className={`w-8 h-8 shrink-0 rounded-sm border-2 grid place-items-center
                                     ${item.owned
-                                      ? "border-cyan-400 bg-cyan-400 text-slate-950"
-                                      : "border-slate-700"}`}
+                                      ? "border-accent bg-accent text-on-accent"
+                                      : "border-line-hi"}`}
                       >
                         {item.owned && <Check size={17} strokeWidth={3} />}
                       </span>
 
                       <span className="flex-1">
-                        <span className={item.owned ? "" : "text-slate-400"}>{item.label}</span>
+                        <span className={item.owned ? "" : "text-muted"}>{item.label}</span>
                         {!item.owned && unlocks > 0 && (
-                          <span className="block text-xs text-amber-400/80 mt-0.5">
+                          <span className="block text-xs text-warn/80 mt-0.5">
                             {unlocks} {unlocks === 1 ? "exercise needs" : "exercises need"} this
                           </span>
                         )}
@@ -134,7 +134,7 @@ export default function EquipmentInventory({ onBack }) {
             </ul>
 
             {blocked > 0 && (
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs text-subtle">
                 {blocked} {blocked === 1 ? "exercise is" : "exercises are"} currently out of reach.
                 Open one to see what you could do instead.
               </p>
@@ -142,7 +142,7 @@ export default function EquipmentInventory({ onBack }) {
 
             {/* Not equipment, but it belongs with the other things you set once. */}
             <div className="mt-10">
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
                 <Ruler size={11} className="inline mr-1.5 -mt-0.5" />
                 Distance in
               </p>
@@ -155,16 +155,16 @@ export default function EquipmentInventory({ onBack }) {
                     key={o.v}
                     onClick={() => changeUnit(o.v)}
                     className={`border-2 rounded-sm py-3 text-sm
-                                focus:outline-none focus:ring-1 focus:ring-cyan-400
+                                focus:outline-none focus:ring-1 focus:ring-accent
                                 ${unit === o.v
-                                  ? "border-cyan-400 text-cyan-300"
-                                  : "border-slate-800 text-slate-400 hover:border-slate-600"}`}
+                                  ? "border-accent text-accent-hi"
+                                  : "border-line text-muted hover:border-line-hi2"}`}
                   >
                     {o.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] text-slate-600">
+              <p className="mt-2 text-[11px] text-faint">
                 Distances are stored in metres either way, so switching this never changes what
                 your history says you did.
               </p>

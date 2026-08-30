@@ -1,4 +1,4 @@
-# Coach
+# Keep Moving
 
 A voice-coached exercise timer. It announces each exercise, counts down, listens
 for "done" or "skip", and logs what you actually did.
@@ -49,7 +49,7 @@ than a refactor.
 
 ## Architecture
 
-`src/lib/coachData.js` is the only file that talks to Supabase. Components call
+`src/lib/data.js` is the only file that talks to Supabase. Components call
 its functions and never touch `supabase.from(...)` directly. Keeping that line
 clean is what makes the schema safe to change.
 
@@ -124,7 +124,24 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   `sessions` keeps `workout_name`, so renaming something doesn't rewrite what
   your history says you did. Don't "fix" this by joining to live rows.
 - `days_of_week` is JavaScript's convention: 0 = Sunday, 6 = Saturday.
-- Dark UI, `rounded-sm`, uppercase `tracking-[0.25em]` eyebrow labels,
+- **No raw palette colours in components.** Every colour goes through a
+  semantic token defined in `src/index.css` — `bg-canvas`, `text-subtle`,
+  `border-line`, `ring-accent`. A `bg-slate-900` in a component only renders
+  correctly in one theme, which is the bug the tokens exist to prevent.
+- **`kind` colour is not severity.** The four exercise kinds have their own
+  scale (`kind-stretch`, `kind-strength`, `kind-core`, `kind-cardio`). Cardio
+  is rose and errors are rose, but they're different tokens on purpose — don't
+  reuse `danger` for cardio just because they match today.
+- **Theme lives in two places, deliberately.** `localStorage` drives first
+  paint via the inline script in `index.html`; `preferences.theme` is the
+  cross-device copy that `syncThemeFromPrefs` adopts once a session exists. If
+  you change the storage key or the resolution rule, change both — the inline
+  script can't import from `src/lib/theme.js`.
+- **One column at every width.** The layout widens at `lg` (`max-w-lg
+  lg:max-w-2xl`) rather than rearranging into a grid. The controls are sized
+  for a thumb because the app is used propped on a floor, and a desktop layout
+  that shrinks them would be worse on the device it's actually used on.
+- `rounded-sm`, uppercase `tracking-[0.25em]` eyebrow labels,
   `fontVariantNumeric: tabular-nums` on anything that counts.
 - Voice recognition is Chrome and Edge only. The coach must ignore audio while
   it is speaking, or it hears itself say "done."
@@ -149,17 +166,6 @@ Two rules follow:
 The check also catches a component that exists but nothing imports — that's how
 `ExerciseEditor` was found unwired.
 
-## Screen snapshots
-
-`npm run snapshots` builds `coach-screens.html` — a single self-contained file
-showing every screen side by side, live and interactive. It renders the *real*
-components against `snapshots/mockData.js`, with the data layer swapped by a
-resolveId plugin. The formatting helpers are re-exported from the real module
-rather than copied, so the snapshots can't drift from the app.
-
-Useful for reviewing layout without a database, and for showing someone the
-app without deploying it.
-
 ## Database changes
 
 Schema changes are migrations, never dashboard edits:
@@ -180,18 +186,18 @@ holding the anon key, which is public.
 
 ## TODO
 
-1. **Port the timer.** `exercise-coach.jsx` from the original prototype still
-   uses `window.storage` and one flat list. It should walk
-   `fetchWorkoutSequence(workoutId)` — already one entry per set, in performed
-   order — and call `saveSession({ items, workoutId, orderMode })` with one
-   item per set. Its `DEFAULT_ROUTINE` constant should be deleted; those
-   exercises live in the database now.
-5. **Target editor.** `setExerciseTarget` / `clearExerciseTarget` exist and
-   nothing calls them. Until something does, every user stays on the library's
-   suggestions — `targetIsPersonal` is false everywhere.
-2. **Exercise editor.** Create and edit your own exercises with a video URL
-   and tags. `ExerciseDetail` already takes an unwired `onEdit` prop.
-3. **Workout editor.** Reorder, add and remove exercises, set per-slot
-   overrides, edit the schedule.
-4. **History against workouts.** Sessions now carry `workout_id`; the history
-   view still shows a flat list.
+The five items that stood here — port the timer, target editor, exercise
+editor, workout editor, and history against workouts — are all done, and the
+list was left describing work that had already shipped. Verified against the
+code: `SessionScreen` walks `fetchWorkoutSequence` and calls `saveSession`
+with no `window.storage` left; `TargetSheet` calls `setExerciseTarget` and
+`clearExerciseTarget`; `ExerciseEditor` is reached from both `WorkoutPicker`
+and `WorkoutEditor`; `WorkoutEditor` is reached from `App`; and `History`
+groups by session and shows `workoutName`.
+
+Nothing is queued. **Program** remains reserved and unbuilt — see Vocabulary.
+
+`docs/INTEGRATION.md` is now a historical record of that port rather than a
+plan. It still names `exercise-coach.jsx` and `ExerciseCoach`, which are the
+prototype's real filenames; don't rename those to match current components,
+because the whole point of the document is what the old code was called.

@@ -3,7 +3,7 @@ import { isConfigured } from "./lib/supabase";
 import AuthGate from "./components/AuthGate";
 import WorkoutPicker from "./components/WorkoutPicker";
 import WorkoutEditor from "./components/WorkoutEditor";
-import CoachSession from "./components/CoachSession";
+import SessionScreen from "./components/SessionScreen";
 import History from "./components/History";
 import EquipmentInventory from "./components/EquipmentInventory";
 
@@ -28,7 +28,7 @@ export default function App() {
       {({ signOut }) => {
         if (view.name === "session") {
           return (
-            <CoachSession
+            <SessionScreen
               workout={view.workout}
               onExit={home}
               onFinished={() => setView({ name: "history" })}
@@ -66,16 +66,16 @@ export default function App() {
 /** A blank screen tells you nothing. This tells you exactly what's missing. */
 function NeedsSetup() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-16">
-      <div className="max-w-md mx-auto">
-        <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Coach</p>
+    <div className="min-h-screen bg-canvas text-ink px-5 py-16">
+      <div className="max-w-md lg:max-w-xl mx-auto">
+        <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">Keep Moving</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Needs configuring</h1>
-        <p className="mt-3 text-sm text-slate-400 leading-relaxed">
-          No Supabase credentials found. Copy <code className="text-cyan-300">.env.example</code> to{" "}
-          <code className="text-cyan-300">.env.local</code>, paste your anon key from Project
+        <p className="mt-3 text-sm text-muted leading-relaxed">
+          No Supabase credentials found. Copy <code className="text-accent-hi">.env.example</code> to{" "}
+          <code className="text-accent-hi">.env.local</code>, paste your anon key from Project
           Settings → API Keys, then restart the dev server — Vite only reads env files at startup.
         </p>
-        <pre className="mt-5 text-xs bg-slate-900 border border-slate-800 rounded-sm p-3 overflow-x-auto text-slate-400">
+        <pre className="mt-5 text-xs bg-surface border border-line rounded-sm p-3 overflow-x-auto text-muted">
 {`VITE_SUPABASE_URL=https://<ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<your anon key>`}
         </pre>

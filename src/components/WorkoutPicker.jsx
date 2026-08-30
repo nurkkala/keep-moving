@@ -11,16 +11,17 @@ import {
   describeDays,
   describeTarget,
   describeOrderMode,
-} from "../lib/coachData";
+} from "../lib/data";
 import ExerciseDetail from "./ExerciseDetail";
 import TargetSheet from "./TargetSheet";
+import ThemeToggle from "./ThemeToggle";
 import ExerciseEditor from "./ExerciseEditor";
 
 const KINDS = {
-  stretch: { label: "Stretch", text: "text-cyan-300", bg: "bg-cyan-400" },
-  strength: { label: "Strength", text: "text-orange-400", bg: "bg-orange-400" },
-  core: { label: "Core", text: "text-violet-300", bg: "bg-violet-400" },
-  cardio: { label: "Cardio", text: "text-rose-300", bg: "bg-rose-400" },
+  stretch: { label: "Stretch", text: "text-kind-stretch-hi", bg: "bg-kind-stretch" },
+  strength: { label: "Strength", text: "text-kind-strength", bg: "bg-kind-strength" },
+  core: { label: "Core", text: "text-kind-core-hi", bg: "bg-kind-core" },
+  cardio: { label: "Cardio", text: "text-kind-cardio-hi", bg: "bg-kind-cardio" },
 };
 
 const minutes = (sec) => `${Math.max(1, Math.round(sec / 60))} min`;
@@ -78,20 +79,21 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
   const rest = workouts.filter((w) => !w.days.includes(today));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <header className="flex items-baseline justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
             </p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">Today</h1>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {onEquipment && (
               <button
                 onClick={onEquipment}
-                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+                className="inline-flex items-center gap-1 text-xs text-subtle hover:text-ink-dim"
               >
                 <Package size={12} /> Kit
               </button>
@@ -99,27 +101,27 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
             {onHistory && (
               <button
                 onClick={onHistory}
-                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+                className="inline-flex items-center gap-1 text-xs text-subtle hover:text-ink-dim"
               >
                 <Clock3 size={12} /> History
               </button>
             )}
             {onSignOut && (
-              <button onClick={onSignOut} className="text-xs text-slate-500 hover:text-slate-300">
+              <button onClick={onSignOut} className="text-xs text-subtle hover:text-ink-dim">
                 Sign out
               </button>
             )}
           </div>
         </header>
 
-        {loading && <p className="mt-8 text-sm text-slate-500">Loading your workouts…</p>}
+        {loading && <p className="mt-8 text-sm text-subtle">Loading your workouts…</p>}
 
         {error && (
-          <div className="mt-8 border border-rose-900 rounded-sm p-4 flex gap-3">
-            <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+          <div className="mt-8 border border-danger-deep rounded-sm p-4 flex gap-3">
+            <AlertCircle size={16} className="text-danger shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-rose-300">{error}</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm text-danger-hi">{error}</p>
+              <p className="text-xs text-subtle mt-1">
                 Check that VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in .env.local.
               </p>
             </div>
@@ -129,9 +131,9 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
         {!loading && !error && (
           <>
             {scheduled.length === 0 ? (
-              <div className="mt-6 border border-dashed border-slate-700 rounded-sm p-8 text-center">
-                <p className="text-slate-400 text-sm">Nothing scheduled today.</p>
-                <p className="text-slate-600 text-xs mt-1">Pick anything below to do it anyway.</p>
+              <div className="mt-6 border border-dashed border-line-hi rounded-sm p-8 text-center">
+                <p className="text-muted text-sm">Nothing scheduled today.</p>
+                <p className="text-faint text-xs mt-1">Pick anything below to do it anyway.</p>
               </div>
             ) : (
               <div className="mt-6 space-y-3">
@@ -143,17 +145,17 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
 
             <button
               onClick={addWorkout}
-              className="mt-6 w-full border border-dashed border-slate-800 rounded-sm py-3
-                         inline-flex items-center justify-center gap-1.5 text-sm text-slate-500
-                         hover:border-slate-600 hover:text-slate-300
-                         focus:outline-none focus:ring-1 focus:ring-cyan-400"
+              className="mt-6 w-full border border-dashed border-line rounded-sm py-3
+                         inline-flex items-center justify-center gap-1.5 text-sm text-subtle
+                         hover:border-line-hi2 hover:text-ink-dim
+                         focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <Plus size={14} /> New workout
             </button>
 
             {rest.length > 0 && (
               <>
-                <p className="mt-10 text-[11px] uppercase tracking-[0.25em] text-slate-500">
+                <p className="mt-10 text-[11px] uppercase tracking-[0.25em] text-subtle">
                   Other workouts
                 </p>
                 <div className="mt-3 space-y-3">
@@ -175,22 +177,22 @@ function WorkoutCard({ workout, highlight, onOpen }) {
     <button
       onClick={onOpen}
       className={`w-full text-left border rounded-sm p-4 transition-colors
-                  focus:outline-none focus:ring-1 focus:ring-cyan-400
+                  focus:outline-none focus:ring-1 focus:ring-accent
                   ${highlight
-                    ? "border-slate-600 bg-slate-900 hover:border-cyan-400"
-                    : "border-slate-800 hover:border-slate-600"}`}
+                    ? "border-line-hi2 bg-surface hover:border-accent"
+                    : "border-line hover:border-line-hi2"}`}
     >
       <div className="flex items-baseline justify-between gap-3">
         <span className="font-medium">{workout.name}</span>
         <span
-          className="text-sm text-slate-400 shrink-0"
+          className="text-sm text-muted shrink-0"
           style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {workout.exerciseCount} · {minutes(workout.estWorkSec)}
         </span>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-subtle">
         <span className="inline-flex items-center gap-1">
           <Calendar size={11} /> {describeDays(workout.days)}
         </span>
@@ -200,7 +202,7 @@ function WorkoutCard({ workout, highlight, onOpen }) {
           </span>
         )}
         {workout.missingEquipment > 0 && (
-          <span className="inline-flex items-center gap-1 text-amber-400/80">
+          <span className="inline-flex items-center gap-1 text-warn/80">
             <AlertTriangle size={11} /> missing kit
           </span>
         )}
@@ -232,29 +234,29 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   if (!workout) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-200
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm"
+          className="inline-flex items-center gap-1 text-sm text-subtle hover:text-ink-soft
+                     focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
         >
           <ChevronLeft size={15} /> Today
         </button>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">{workout.name}</h1>
         {workout.description && (
-          <p className="mt-2 text-sm text-slate-400 leading-relaxed">{workout.description}</p>
+          <p className="mt-2 text-sm text-muted leading-relaxed">{workout.description}</p>
         )}
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-subtle">
           {describeDays(workout.days)} · {workout.exerciseCount} exercises ·{" "}
           {minutes(workout.estWorkSec)} · {describeOrderMode(workout.orderMode)}
         </p>
 
         {loading ? (
-          <p className="mt-8 text-sm text-slate-500">Loading exercises…</p>
+          <p className="mt-8 text-sm text-subtle">Loading exercises…</p>
         ) : (
-          <ul className="mt-7 divide-y divide-slate-800 border-y border-slate-800">
+          <ul className="mt-7 divide-y divide-line border-y border-line">
             {list.map((ex) => {
               const kind = KINDS[ex.kind];
               return (
@@ -262,13 +264,13 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
                   <button
                     onClick={() => setDetailId(ex.exerciseId)}
                     className="flex-1 text-left flex items-baseline gap-3
-                               hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                               hover:text-ink focus:outline-none focus:ring-1 focus:ring-accent"
                   >
-                    <span className={`w-1 h-1 rounded-full shrink-0 ${kind?.bg ?? "bg-slate-600"}`} />
+                    <span className={`w-1 h-1 rounded-full shrink-0 ${kind?.bg ?? "bg-track"}`} />
                     <span className="flex-1">
                       <span className="block">{ex.name}</span>
                       {ex.cue && (
-                        <span className="block text-xs text-slate-500 mt-0.5">{ex.cue}</span>
+                        <span className="block text-xs text-subtle mt-0.5">{ex.cue}</span>
                       )}
                     </span>
                   </button>
@@ -281,11 +283,11 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
                         : "Suggested — tap to make it yours"
                     }
                     className={`text-sm shrink-0 border-b border-dashed
-                                hover:text-cyan-300 hover:border-cyan-400
-                                focus:outline-none focus:ring-1 focus:ring-cyan-400
+                                hover:text-accent-hi hover:border-accent
+                                focus:outline-none focus:ring-1 focus:ring-accent
                                 ${ex.targetIsPersonal
-                                  ? "text-slate-400 border-slate-700"
-                                  : "text-slate-600 italic border-slate-800"}`}
+                                  ? "text-muted border-line-hi"
+                                  : "text-faint italic border-line"}`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {describeTarget(ex)}
@@ -297,8 +299,8 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
         )}
 
         {equipment.length > 0 && (
-          <div className="mt-6 border border-slate-800 rounded-sm p-4">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+          <div className="mt-6 border border-line rounded-sm p-4">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
               What you'll need
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -308,8 +310,8 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
                   title={`Used by ${eq.usedBy} ${eq.usedBy === 1 ? "exercise" : "exercises"}`}
                   className={`text-xs border rounded-sm px-2 py-0.5
                               ${eq.owned
-                                ? "border-slate-700 text-slate-300"
-                                : "border-amber-800 text-amber-300"}`}
+                                ? "border-line-hi text-ink-dim"
+                                : "border-warn-edge text-warn-hi"}`}
                 >
                   {eq.label}
                   {!eq.owned && " — don't have"}
@@ -317,7 +319,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
               ))}
             </div>
             {equipment.some((e) => !e.owned) && (
-              <p className="mt-2 text-[11px] text-slate-500">
+              <p className="mt-2 text-[11px] text-subtle">
                 Tap an exercise to see what you could do instead.
               </p>
             )}
@@ -327,10 +329,10 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
         {onEdit && (
           <button
             onClick={() => onEdit(workout)}
-            className="mt-6 w-full border border-slate-800 rounded-sm py-2.5
-                       inline-flex items-center justify-center gap-1.5 text-sm text-slate-400
-                       hover:border-slate-600 hover:text-slate-200
-                       focus:outline-none focus:ring-1 focus:ring-cyan-400"
+            className="mt-6 w-full border border-line rounded-sm py-2.5
+                       inline-flex items-center justify-center gap-1.5 text-sm text-muted
+                       hover:border-line-hi2 hover:text-ink-soft
+                       focus:outline-none focus:ring-1 focus:ring-accent"
           >
             <Pencil size={13} /> Edit workout
           </button>
@@ -339,9 +341,9 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
         {onStart && (
           <button
             onClick={() => onStart(workout)}
-            className="mt-3 w-full bg-cyan-400 text-slate-950 rounded-sm py-3 font-medium
-                       hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-400
-                       focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="mt-3 w-full bg-accent text-on-accent rounded-sm py-3 font-medium
+                       hover:bg-accent-hi focus:outline-none focus:ring-2 focus:ring-accent
+                       focus:ring-offset-2 focus:ring-offset-canvas"
           >
             Start workout
           </button>
@@ -360,7 +362,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
       )}
 
       {editingExercise && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-canvas">
           <ExerciseEditor
             exercise={editingExercise}
             onClose={() => setEditingExercise(null)}

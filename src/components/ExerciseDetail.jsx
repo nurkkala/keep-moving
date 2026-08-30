@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Play, ExternalLink, Pencil, AlertTriangle } from "lucide-react";
-import { fetchExercise, describeTarget, fetchAvailability, fetchAlternatives } from "../lib/coachData";
+import { fetchExercise, describeTarget, fetchAvailability, fetchAlternatives } from "../lib/data";
 
 const KINDS = {
-  stretch: { label: "Stretch", text: "text-cyan-300", bg: "bg-cyan-400" },
-  strength: { label: "Strength", text: "text-orange-400", bg: "bg-orange-400" },
-  core: { label: "Core", text: "text-violet-300", bg: "bg-violet-400" },
-  cardio: { label: "Cardio", text: "text-rose-300", bg: "bg-rose-400" },
+  stretch: { label: "Stretch", text: "text-kind-stretch-hi", bg: "bg-kind-stretch" },
+  strength: { label: "Strength", text: "text-kind-strength", bg: "bg-kind-strength" },
+  core: { label: "Core", text: "text-kind-core-hi", bg: "bg-kind-core" },
+  cardio: { label: "Cardio", text: "text-kind-cardio-hi", bg: "bg-kind-cardio" },
 };
 
 /** Turns a watch URL into an embeddable one. Returns null if we can't. */
@@ -108,7 +108,7 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 bg-canvas/80 backdrop-blur-sm flex items-end sm:items-center justify-center"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -116,19 +116,19 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border-t sm:border
-                   border-slate-700 sm:rounded-sm px-5 pb-8 pt-5"
+        className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-surface border-t sm:border
+                   border-line-hi sm:rounded-sm px-5 pb-8 pt-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             {kind && (
               <p className={`text-[11px] uppercase tracking-[0.25em] ${kind.text}`}>{kind.label}</p>
             )}
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100">
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
               {loading ? "Loading…" : data?.name ?? "Not found"}
             </h2>
             {data && (
-              <p className="mt-1 text-sm text-slate-400" style={{ fontVariantNumeric: "tabular-nums" }}>
+              <p className="mt-1 text-sm text-muted" style={{ fontVariantNumeric: "tabular-nums" }}>
                 {describeTarget(
                   {
                     targetType: data.suggestedType,
@@ -137,8 +137,8 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
                   },
                   { long: true }
                 )}
-                <span className="text-slate-600"> suggested</span>
-                {data.builtIn && <span className="text-slate-600"> · shared</span>}
+                <span className="text-faint"> suggested</span>
+                {data.builtIn && <span className="text-faint"> · shared</span>}
               </p>
             )}
           </div>
@@ -147,13 +147,13 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
             ref={closeRef}
             onClick={onClose}
             aria-label="Close"
-            className="text-slate-500 hover:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm p-1"
+            className="text-subtle hover:text-ink-soft focus:outline-none focus:ring-1 focus:ring-accent rounded-sm p-1"
           >
             <X size={18} />
           </button>
         </div>
 
-        {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
+        {error && <p className="mt-6 text-sm text-danger">{error}</p>}
 
         {data && (
           <>
@@ -173,9 +173,9 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
                 ) : embed ? (
                   <button
                     onClick={() => setPlaying(true)}
-                    className="w-full aspect-video border border-slate-700 rounded-sm grid place-items-center
-                               text-slate-400 hover:text-slate-100 hover:border-slate-500
-                               focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="w-full aspect-video border border-line-hi rounded-sm grid place-items-center
+                               text-muted hover:text-ink hover:border-line-hi3
+                               focus:outline-none focus:ring-1 focus:ring-accent"
                   >
                     <span className="flex items-center gap-2 text-sm">
                       <Play size={16} /> Watch the demonstration
@@ -186,7 +186,7 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
                     href={data.videoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:text-cyan-200"
+                    className="inline-flex items-center gap-1.5 text-sm text-accent-hi hover:text-accent-soft"
                   >
                     Open the video <ExternalLink size={13} />
                   </a>
@@ -197,35 +197,35 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
             {/* ------------------------------------------------ how to do it */}
             {data.instructions && (
               <div className="mt-6">
-                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Remember</p>
-                <p className="mt-1.5 text-slate-200">{data.instructions}</p>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">Remember</p>
+                <p className="mt-1.5 text-ink-soft">{data.instructions}</p>
               </div>
             )}
 
             {data.description && (
               <div className="mt-5">
-                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">About</p>
-                <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">{data.description}</p>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">About</p>
+                <p className="mt-1.5 text-sm text-muted leading-relaxed">{data.description}</p>
               </div>
             )}
 
             {blocked && (
-              <div className="mt-6 border border-amber-900/60 bg-amber-950/20 rounded-sm p-4">
-                <p className="inline-flex items-center gap-2 text-sm text-amber-300">
+              <div className="mt-6 border border-warn-deep/60 bg-warn-bg/20 rounded-sm p-4">
+                <p className="inline-flex items-center gap-2 text-sm text-warn-hi">
                   <AlertTriangle size={15} />
                   You don't have {blocked.missing.join(" or ")}
                 </p>
 
                 {alternatives.length > 0 ? (
                   <>
-                    <p className="mt-2 text-xs text-slate-400">
+                    <p className="mt-2 text-xs text-muted">
                       Works the same area, and you have what it needs:
                     </p>
                     <ul className="mt-2 space-y-1">
                       {alternatives.map((alt) => (
-                        <li key={alt.exerciseId} className="text-sm text-slate-300">
+                        <li key={alt.exerciseId} className="text-sm text-ink-dim">
                           {alt.name}
-                          <span className="text-slate-600 text-xs">
+                          <span className="text-faint text-xs">
                             {" "}
                             · {alt.sharedAreas === 1 ? "same area" : `${alt.sharedAreas} shared areas`}
                             {alt.needs.length > 0 && ` · needs ${alt.needs.join(", ")}`}
@@ -235,7 +235,7 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
                     </ul>
                   </>
                 ) : (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-subtle">
                     Nothing in your library covers the same ground yet.
                   </p>
                 )}
@@ -247,8 +247,8 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
             {!data.builtIn && onEdit && (
               <button
                 onClick={() => onEdit(data)}
-                className="mt-7 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100
-                           focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm"
+                className="mt-7 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink
+                           focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
               >
                 <Pencil size={13} /> Edit this exercise
               </button>
@@ -276,14 +276,14 @@ function Tags({ attributes }) {
     <div className="mt-6 space-y-3.5">
       {axes.map(([key, values]) => (
         <div key={key}>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
             {LABELS[key] ?? key.replace(/_/g, " ")}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {values.map((v) => (
               <span
                 key={v.id}
-                className="text-xs text-slate-300 border border-slate-700 rounded-sm px-2 py-0.5"
+                className="text-xs text-ink-dim border border-line-hi rounded-sm px-2 py-0.5"
               >
                 {v.label}
               </span>

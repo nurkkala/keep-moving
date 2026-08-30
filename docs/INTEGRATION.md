@@ -1,6 +1,6 @@
-# Wiring the coach to Supabase
+# Wiring Keep Moving to Supabase
 
-Project: **Coach Claude** (`irjgefdsllshzzqxzful`, us-east-2)
+Project: **Keep Moving** (`irjgefdsllshzzqxzful`, us-east-2)
 
 ## 1. Install and configure
 
@@ -49,7 +49,7 @@ import {
   fetchOrSeedWorkouts, fetchWorkoutExercises, saveWorkoutExercises,
   fetchHistory, saveSession, clearHistory,
   fetchPrefs, savePrefs,
-} from "./lib/coachData";
+} from "./lib/data";
 ```
 
 | Current | Replace with |

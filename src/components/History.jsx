@@ -3,13 +3,13 @@ import { ChevronLeft, TrendingUp } from "lucide-react";
 import {
   fetchHistory, fetchKindTotals, fetchPerformanceHistory, fetchBests,
   clearHistory, describeTarget, describeOrderMode,
-} from "../lib/coachData";
+} from "../lib/data";
 
 const KINDS = {
-  stretch: { label: "Stretch", bg: "bg-cyan-400", text: "text-cyan-300" },
-  strength: { label: "Strength", bg: "bg-orange-400", text: "text-orange-400" },
-  core: { label: "Core", bg: "bg-violet-400", text: "text-violet-300" },
-  cardio: { label: "Cardio", bg: "bg-rose-400", text: "text-rose-300" },
+  stretch: { label: "Stretch", bg: "bg-kind-stretch", text: "text-kind-stretch-hi" },
+  strength: { label: "Strength", bg: "bg-kind-strength", text: "text-kind-strength" },
+  core: { label: "Core", bg: "bg-kind-core", text: "text-kind-core-hi" },
+  cardio: { label: "Cardio", bg: "bg-kind-cardio", text: "text-kind-cardio-hi" },
 };
 
 const day = (ms) =>
@@ -54,31 +54,31 @@ export default function History({ onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-200
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm"
+          className="inline-flex items-center gap-1 text-sm text-subtle hover:text-ink-soft
+                     focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
         >
           <ChevronLeft size={15} /> Today
         </button>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">History</h1>
 
-        {loading && <p className="mt-6 text-sm text-slate-500">Loading…</p>}
-        {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
+        {loading && <p className="mt-6 text-sm text-subtle">Loading…</p>}
+        {error && <p className="mt-6 text-sm text-danger">{error}</p>}
 
         {!loading && !error && (
           <>
-            <div className="mt-6 border border-slate-800 rounded-sm p-4">
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">All time</p>
+            <div className="mt-6 border border-line rounded-sm p-4">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">All time</p>
               <p
                 className="mt-1 text-3xl font-semibold tracking-tight"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {Math.round(grand / 60)}{" "}
-                <span className="text-base font-normal text-slate-400">
+                <span className="text-base font-normal text-muted">
                   min across {sessions.length} sessions
                 </span>
               </p>
@@ -86,22 +86,22 @@ export default function History({ onBack }) {
             </div>
 
             {sessions.length === 0 ? (
-              <p className="mt-8 text-sm text-slate-600 border border-dashed border-slate-800 rounded-sm p-8 text-center">
+              <p className="mt-8 text-sm text-faint border border-dashed border-line rounded-sm p-8 text-center">
                 No sessions saved yet. Finish a workout and it lands here.
               </p>
             ) : (
               <ul className="mt-7 space-y-5">
                 {sessions.map((s) => (
-                  <li key={s.id} className="border-b border-slate-800 pb-4">
+                  <li key={s.id} className="border-b border-line pb-4">
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="text-sm">
                         {day(s.at)}
                         {s.workoutName && (
-                          <span className="text-slate-500"> · {s.workoutName}</span>
+                          <span className="text-subtle"> · {s.workoutName}</span>
                         )}
                       </span>
                       <span
-                        className="text-sm text-slate-400 shrink-0"
+                        className="text-sm text-muted shrink-0"
                         style={{ fontVariantNumeric: "tabular-nums" }}
                       >
                         {Math.round(s.totalSec / 60)} min
@@ -109,7 +109,7 @@ export default function History({ onBack }) {
                     </div>
 
                     {s.orderMode && (
-                      <p className="text-[11px] text-slate-600 mt-0.5">
+                      <p className="text-[11px] text-faint mt-0.5">
                         {describeOrderMode(s.orderMode)}
                       </p>
                     )}
@@ -124,18 +124,18 @@ export default function History({ onBack }) {
                             }
                             disabled={!it.exerciseId}
                             className="w-full text-left flex items-baseline gap-2 text-xs py-0.5
-                                       hover:text-slate-200 disabled:hover:text-inherit
-                                       focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                                       hover:text-ink-soft disabled:hover:text-inherit
+                                       focus:outline-none focus:ring-1 focus:ring-accent"
                           >
                             <span
                               className={`w-1 h-1 rounded-full shrink-0 ${
-                                KINDS[it.kind]?.bg ?? "bg-slate-600"
+                                KINDS[it.kind]?.bg ?? "bg-track"
                               }`}
                             />
-                            <span className="flex-1 text-slate-400">{it.name}</span>
+                            <span className="flex-1 text-muted">{it.name}</span>
                             <span
                               className={`shrink-0 ${
-                                it.metEverySet ? "text-slate-500" : "text-slate-600"
+                                it.metEverySet ? "text-subtle" : "text-faint"
                               }`}
                               style={{ fontVariantNumeric: "tabular-nums" }}
                             >
@@ -143,7 +143,7 @@ export default function History({ onBack }) {
                               {it.targetSets > 1 && `/${it.targetSets}`} ×{" "}
                               {it.targetType === "time" ? `${it.totalValue}s` : it.totalValue}
                               {!it.metEverySet && (
-                                <span className="text-slate-700"> · under</span>
+                                <span className="text-ghost"> · under</span>
                               )}
                             </span>
                           </button>
@@ -158,7 +158,7 @@ export default function History({ onBack }) {
             {sessions.length > 0 && (
               <button
                 onClick={clear}
-                className="mt-6 text-xs text-slate-600 hover:text-rose-400"
+                className="mt-6 text-xs text-faint hover:text-danger"
               >
                 Clear saved history
               </button>
@@ -190,12 +190,12 @@ function ExerciseProgress({ detail, best, onBack }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-5 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-lg lg:max-w-2xl mx-auto">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-200
-                     focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded-sm"
+          className="inline-flex items-center gap-1 text-sm text-subtle hover:text-ink-soft
+                     focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
         >
           <ChevronLeft size={15} /> History
         </button>
@@ -203,27 +203,27 @@ function ExerciseProgress({ detail, best, onBack }) {
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">{detail.name}</h1>
 
         {best && (
-          <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-slate-400">
-            <TrendingUp size={14} className="text-cyan-300" />
+          <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted">
+            <TrendingUp size={14} className="text-accent-hi" />
             Best set{" "}
             <span style={{ fontVariantNumeric: "tabular-nums" }}>
               {describeTarget({ targetType: best.targetType, targetValue: best.bestSet })}
             </span>
-            <span className="text-slate-600">· {best.timesPerformed} sessions</span>
+            <span className="text-faint">· {best.timesPerformed} sessions</span>
           </p>
         )}
 
         {loading ? (
-          <p className="mt-6 text-sm text-slate-500">Loading…</p>
+          <p className="mt-6 text-sm text-subtle">Loading…</p>
         ) : bySession.length === 0 ? (
-          <p className="mt-6 text-sm text-slate-600">You haven't done this one yet.</p>
+          <p className="mt-6 text-sm text-faint">You haven't done this one yet.</p>
         ) : (
           <ul className="mt-7 space-y-4">
             {bySession.map((s) => (
-              <li key={s.at} className="border-b border-slate-800 pb-3">
+              <li key={s.at} className="border-b border-line pb-3">
                 <div className="flex items-baseline justify-between">
                   <span className="text-sm">{day(s.at)}</span>
-                  <span className="text-[11px] text-slate-600">
+                  <span className="text-[11px] text-faint">
                     {s.workoutName} {s.orderMode === "circuit" && "· circuit"}
                   </span>
                 </div>
@@ -239,10 +239,10 @@ function ExerciseProgress({ detail, best, onBack }) {
                       }
                       className={`text-xs border rounded-sm px-2 py-0.5
                                   ${set.skipped
-                                    ? "border-slate-800 text-slate-700 line-through"
+                                    ? "border-line text-ghost line-through"
                                     : set.metTarget
-                                    ? "border-cyan-900 text-cyan-300"
-                                    : "border-slate-700 text-slate-400"}`}
+                                    ? "border-accent-deep text-accent-hi"
+                                    : "border-line-hi text-muted"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {set.skipped
@@ -253,7 +253,7 @@ function ExerciseProgress({ detail, best, onBack }) {
                 </div>
 
                 {/* The target as it stood that day — not today's. */}
-                <p className="mt-1.5 text-[11px] text-slate-600">
+                <p className="mt-1.5 text-[11px] text-faint">
                   Target then:{" "}
                   {describeTarget({
                     targetType: s.sets[0].targetType,
@@ -275,18 +275,18 @@ function KindBar({ byKind, total }) {
 
   return (
     <>
-      <div className="mt-3 flex h-1.5 rounded-sm overflow-hidden bg-slate-800">
+      <div className="mt-3 flex h-1.5 rounded-sm overflow-hidden bg-surface-hi">
         {Object.entries(byKind).map(([kind, sec]) => (
           <div
             key={kind}
-            className={KINDS[kind]?.bg ?? "bg-slate-600"}
+            className={KINDS[kind]?.bg ?? "bg-track"}
             style={{ width: `${(sec / total) * 100}%` }}
           />
         ))}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
         {Object.entries(byKind).map(([kind, sec]) => (
-          <span key={kind} className="text-[11px] text-slate-500">
+          <span key={kind} className="text-[11px] text-subtle">
             <span className={KINDS[kind]?.text ?? ""}>·</span> {KINDS[kind]?.label ?? kind}{" "}
             {Math.round(sec / 60)}m
           </span>
