@@ -78,8 +78,9 @@ src/lib/supabase.js       Client singleton — no side effects at import time
 src/lib/data.js           Every query — the only file that talks to Supabase
 src/lib/speech.js         Speaking and listening
 src/components/           AuthGate, WorkoutPicker, SessionScreen, WorkoutEditor,
-                          ExerciseDetail, ExerciseEditor, TargetSheet,
-                          EquipmentInventory, History
+                          ExerciseLibrary, ExerciseDetail, ExerciseEditor,
+                          TargetSheet, EquipmentInventory, History
+                          KindBadge, EquipmentNote, ThemeToggle — shared bits
 src/lib/theme.js          Dark / light / system, and where each is stored
 supabase/migrations/      Schema, in order
 scripts/                  Build verification
@@ -107,12 +108,16 @@ identically — it just skips the guards.
 
 ## Status
 
-All nine screens are built and wired: auth, the picker, the timer, the workout
-editor, the exercise editor, the target sheet, the detail sheet, equipment, and
-history. The timer walks `fetchWorkoutSequence` — one entry per set, in performed
-order — and saves one `session_items` row per set.
+All ten screens are built and wired: auth, the picker, the timer, the workout
+editor, the exercise library, the exercise editor, the target sheet, the detail
+sheet, equipment, and history. The timer walks `fetchWorkoutSequence` — one
+entry per set, in performed order — and saves one `session_items` row per set.
 
 Dark, light, and follow-the-system, chosen from the header on Today. The layout
 is one column at every width, widening at `lg` rather than rearranging.
 
-Nothing is queued. See the TODO at the end of CLAUDE.md.
+Equipment is stated wherever an exercise is listed, not hidden behind a tap: the
+Today card names what you're short of, workout rows carry it, and the library
+filters on it.
+
+Open work is at the end of CLAUDE.md.

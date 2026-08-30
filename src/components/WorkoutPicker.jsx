@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   ChevronLeft, Calendar, Repeat, AlertCircle, Pencil, Plus, Clock3,
-  AlertTriangle, Package,
+  AlertTriangle, Package, Library,
 } from "lucide-react";
 import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
   fetchWorkoutEquipment,
+  fetchAvailability,
+  fetchEquipmentByWorkout,
   createWorkout,
   describeDays,
   describeTarget,
@@ -16,25 +18,28 @@ import ExerciseDetail from "./ExerciseDetail";
 import TargetSheet from "./TargetSheet";
 import ThemeToggle from "./ThemeToggle";
 import ExerciseEditor from "./ExerciseEditor";
-
-const KINDS = {
-  stretch: { label: "Stretch", text: "text-kind-stretch-hi", bg: "bg-kind-stretch" },
-  strength: { label: "Strength", text: "text-kind-strength", bg: "bg-kind-strength" },
-  core: { label: "Core", text: "text-kind-core-hi", bg: "bg-kind-core" },
-  cardio: { label: "Cardio", text: "text-kind-cardio-hi", bg: "bg-kind-cardio" },
-};
+import KindBadge from "./KindBadge";
+import EquipmentNote from "./EquipmentNote";
+import { PromptDialog } from "./Dialog";
 
 const minutes = (sec) => `${Math.max(1, Math.round(sec / 60))} min`;
+
+/* `py-1.5` is what lifts these off a 16px tap target. */
+const NAV_LINK =
+  "inline-flex items-center gap-1 py-1.5 text-xs text-subtle rounded-sm " +
+  "hover:text-ink-dim focus:outline-none focus:ring-1 focus:ring-accent";
 
 /**
  * The front door: what's on today, everything else below it, and a tap into
  * any workout's exercise list.
  */
-export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment, onSignOut }) {
+export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment, onLibrary, onSignOut }) {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openId, setOpenId] = useState(null);
+  const [kitByWorkout, setKitByWorkout] = useState({});
+  const [naming, setNaming] = useState(false);
 
   const reload = useCallback(
     () =>
@@ -47,6 +52,7 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
 
   useEffect(() => {
     reload();
+    fetchEquipmentByWorkout().then(setKitByWorkout).catch(() => {});
   }, [reload]);
 
   if (openId) {
@@ -62,13 +68,12 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
     );
   }
 
-  const addWorkout = async () => {
-    const name = window.prompt("Name this workout", "New workout");
-    if (!name?.trim()) return;
+  const addWorkout = async (name) => {
+    setNaming(false);
     try {
-      const id = await createWorkout({ name: name.trim(), days: [] });
+      const id = await createWorkout({ name, days: [] });
       await reload();
-      onEdit?.({ id, name: name.trim(), days: [], orderMode: "straight", restSec: 15 });
+      onEdit?.({ id, name, days: [], orderMode: "straight", restSec: 15 });
     } catch (e) {
       setError(e.message);
     }
@@ -81,36 +86,38 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
   return (
     <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
       <div className="max-w-lg lg:max-w-2xl mx-auto">
-        <header className="flex items-baseline justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
-              {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Today</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {onEquipment && (
-              <button
-                onClick={onEquipment}
-                className="inline-flex items-center gap-1 text-xs text-subtle hover:text-ink-dim"
-              >
-                <Package size={12} /> Kit
-              </button>
-            )}
-            {onHistory && (
-              <button
-                onClick={onHistory}
-                className="inline-flex items-center gap-1 text-xs text-subtle hover:text-ink-dim"
-              >
-                <Clock3 size={12} /> History
-              </button>
-            )}
-            {onSignOut && (
-              <button onClick={onSignOut} className="text-xs text-subtle hover:text-ink-dim">
-                Sign out
-              </button>
-            )}
+        {/* Five controls don't fit beside a heading at 320px — they ran 86px
+            past the edge. The nav wraps under the title on a phone and sits
+            beside it once there's room. */}
+        <header>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
+            {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <h1 className="text-3xl font-semibold tracking-tight">Today</h1>
+            <nav className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <ThemeToggle />
+              {onLibrary && (
+                <button onClick={onLibrary} className={NAV_LINK}>
+                  <Library size={13} /> Exercises
+                </button>
+              )}
+              {onEquipment && (
+                <button onClick={onEquipment} className={NAV_LINK}>
+                  <Package size={13} /> Kit
+                </button>
+              )}
+              {onHistory && (
+                <button onClick={onHistory} className={NAV_LINK}>
+                  <Clock3 size={13} /> History
+                </button>
+              )}
+              {onSignOut && (
+                <button onClick={onSignOut} className={NAV_LINK}>
+                  Sign out
+                </button>
+              )}
+            </nav>
           </div>
         </header>
 
@@ -138,13 +145,13 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
             ) : (
               <div className="mt-6 space-y-3">
                 {scheduled.map((w) => (
-                  <WorkoutCard key={w.id} workout={w} highlight onOpen={() => setOpenId(w.id)} />
+                  <WorkoutCard key={w.id} workout={w} kit={kitByWorkout[w.id]} highlight onOpen={() => setOpenId(w.id)} />
                 ))}
               </div>
             )}
 
             <button
-              onClick={addWorkout}
+              onClick={() => setNaming(true)}
               className="mt-6 w-full border border-dashed border-line rounded-sm py-3
                          inline-flex items-center justify-center gap-1.5 text-sm text-subtle
                          hover:border-line-hi2 hover:text-ink-dim
@@ -160,7 +167,7 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
                 </p>
                 <div className="mt-3 space-y-3">
                   {rest.map((w) => (
-                    <WorkoutCard key={w.id} workout={w} onOpen={() => setOpenId(w.id)} />
+                    <WorkoutCard key={w.id} workout={w} kit={kitByWorkout[w.id]} onOpen={() => setOpenId(w.id)} />
                   ))}
                 </div>
               </>
@@ -168,11 +175,25 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
           </>
         )}
       </div>
+
+      {naming && (
+        <PromptDialog
+          title="New workout"
+          label="Name"
+          defaultValue="New workout"
+          confirmLabel="Create"
+          onSubmit={addWorkout}
+          onCancel={() => setNaming(false)}
+        />
+      )}
     </div>
   );
 }
 
-function WorkoutCard({ workout, highlight, onOpen }) {
+function WorkoutCard({ workout, highlight, onOpen, kit = [] }) {
+  // Name what's short rather than saying "missing kit" and making you open the
+  // workout to find out which thing it meant.
+  const short = kit.filter((k) => !k.owned).map((k) => k.label);
   return (
     <button
       onClick={onOpen}
@@ -201,9 +222,12 @@ function WorkoutCard({ workout, highlight, onOpen }) {
             <Repeat size={11} /> {describeOrderMode(workout.orderMode)}
           </span>
         )}
-        {workout.missingEquipment > 0 && (
-          <span className="inline-flex items-center gap-1 text-warn/80">
-            <AlertTriangle size={11} /> missing kit
+        {(short.length > 0 || workout.missingEquipment > 0) && (
+          <span className="inline-flex items-center gap-1 text-warn-hi">
+            <AlertTriangle size={11} className="shrink-0" />
+            {short.length > 0
+              ? `no ${short.join(", no ").toLowerCase()}`
+              : "missing kit"}
           </span>
         )}
       </div>
@@ -218,6 +242,9 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   const [targetFor, setTargetFor] = useState(null);
   const [editingExercise, setEditingExercise] = useState(null);
   const [equipment, setEquipment] = useState([]);
+  // Keyed by exercise id, covering the whole library in one request — cheaper
+  // than asking per row, and the rows need it to say what they need.
+  const [availability, setAvailability] = useState({});
 
   const reloadList = useCallback(() => {
     if (!workout) return Promise.resolve();
@@ -228,6 +255,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
 
   useEffect(() => {
     reloadList();
+    fetchAvailability().then(setAvailability).catch(() => {});
     if (workout) fetchWorkoutEquipment(workout.id).then(setEquipment).catch(() => {});
   }, [reloadList, workout]);
 
@@ -257,44 +285,47 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
           <p className="mt-8 text-sm text-subtle">Loading exercises…</p>
         ) : (
           <ul className="mt-7 divide-y divide-line border-y border-line">
-            {list.map((ex) => {
-              const kind = KINDS[ex.kind];
-              return (
-                <li key={ex.id} className="flex items-baseline gap-3 py-3">
-                  <button
-                    onClick={() => setDetailId(ex.exerciseId)}
-                    className="flex-1 text-left flex items-baseline gap-3
-                               hover:text-ink focus:outline-none focus:ring-1 focus:ring-accent"
-                  >
-                    <span className={`w-1 h-1 rounded-full shrink-0 ${kind?.bg ?? "bg-track"}`} />
-                    <span className="flex-1">
-                      <span className="block">{ex.name}</span>
-                      {ex.cue && (
-                        <span className="block text-xs text-subtle mt-0.5">{ex.cue}</span>
-                      )}
-                    </span>
-                  </button>
+            {list.map((ex) => (
+              <li key={ex.id} className="flex items-start gap-3 py-3">
+                <button
+                  onClick={() => setDetailId(ex.exerciseId)}
+                  className="flex-1 text-left flex items-start gap-3
+                             hover:text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <KindBadge kind={ex.kind} className="mt-0.5" />
+                  <span className="flex-1">
+                    <span className="block">{ex.name}</span>
+                    {ex.cue && (
+                      <span className="block text-xs text-subtle mt-0.5">{ex.cue}</span>
+                    )}
+                    {/* What it needs, in the row — so you don't have to open
+                        each exercise to find which one wants the band. */}
+                    <EquipmentNote
+                      availability={availability[ex.exerciseId]}
+                      className="mt-1"
+                    />
+                  </span>
+                </button>
 
-                  <button
-                    onClick={() => setTargetFor(ex)}
-                    title={
-                      ex.targetIsPersonal
-                        ? "Your target — tap to change"
-                        : "Suggested — tap to make it yours"
-                    }
-                    className={`text-sm shrink-0 border-b border-dashed
-                                hover:text-accent-hi hover:border-accent
-                                focus:outline-none focus:ring-1 focus:ring-accent
-                                ${ex.targetIsPersonal
-                                  ? "text-muted border-line-hi"
-                                  : "text-faint italic border-line"}`}
-                    style={{ fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {describeTarget(ex)}
-                  </button>
-                </li>
-              );
-            })}
+                <button
+                  onClick={() => setTargetFor(ex)}
+                  title={
+                    ex.targetIsPersonal
+                      ? "Your target — tap to change"
+                      : "Suggested — tap to make it yours"
+                  }
+                  className={`text-sm shrink-0 border-b border-dashed mt-0.5
+                              hover:text-accent-hi hover:border-accent
+                              focus:outline-none focus:ring-1 focus:ring-accent
+                              ${ex.targetIsPersonal
+                                ? "text-muted border-line-hi"
+                                : "text-faint italic border-line"}`}
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {describeTarget(ex)}
+                </button>
+              </li>
+            ))}
           </ul>
         )}
 

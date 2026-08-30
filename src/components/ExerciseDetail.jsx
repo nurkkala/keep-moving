@@ -1,13 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Play, ExternalLink, Pencil, AlertTriangle } from "lucide-react";
 import { fetchExercise, describeTarget, fetchAvailability, fetchAlternatives } from "../lib/data";
-
-const KINDS = {
-  stretch: { label: "Stretch", text: "text-kind-stretch-hi", bg: "bg-kind-stretch" },
-  strength: { label: "Strength", text: "text-kind-strength", bg: "bg-kind-strength" },
-  core: { label: "Core", text: "text-kind-core-hi", bg: "bg-kind-core" },
-  cardio: { label: "Cardio", text: "text-kind-cardio-hi", bg: "bg-kind-cardio" },
-};
+import KindBadge, { KINDS } from "./KindBadge";
 
 /** Turns a watch URL into an embeddable one. Returns null if we can't. */
 function embedUrl(raw) {
@@ -122,7 +116,14 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
         <div className="flex items-start justify-between gap-4">
           <div>
             {kind && (
-              <p className={`text-[11px] uppercase tracking-[0.25em] ${kind.text}`}>{kind.label}</p>
+              // The same badge the lists use, so the icon you tapped is the
+              // icon you land on.
+              <p className="flex items-center gap-2">
+                <KindBadge kind={data.kind} size="sm" />
+                <span className={`text-[11px] uppercase tracking-[0.25em] ${kind.text}`}>
+                  {kind.label}
+                </span>
+              </p>
             )}
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
               {loading ? "Loading…" : data?.name ?? "Not found"}

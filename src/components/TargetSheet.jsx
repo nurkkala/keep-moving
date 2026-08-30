@@ -103,7 +103,7 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
               onClick={() => setTargetType(t.v)}
               className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent
                           ${targetType === t.v
-                            ? "border-accent text-accent-hi"
+                            ? "border-accent bg-accent text-on-accent font-medium"
                             : "border-line-hi text-muted hover:border-line-hi3"}`}
             >
               {t.label}

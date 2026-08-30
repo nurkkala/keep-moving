@@ -23,6 +23,8 @@ const SENTINELS = [
   ["history", "Clear saved history"],
   ["rule builder", "This rule says"],
   ["equipment", "What you have to hand"],
+  ["exercise library", "whether or not it"],
+  ["tag vocabulary", "rule slots match on"],
 ];
 
 let bundle = "";

@@ -3,7 +3,9 @@ import { X, Trash2 } from "lucide-react";
 import {
   createExercise, updateExercise, deleteExercise, setExerciseTags,
   fetchAttributeTypes,
+  fetchEquipment,
 } from "../lib/data";
+import { ConfirmDialog } from "./Dialog";
 
 const KINDS = [
   { v: "stretch", label: "Stretch" },
@@ -38,9 +40,15 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  // Which equipment you own, so tagging can say what you are short of.
+  const [owned, setOwned] = useState(new Set());
 
   useEffect(() => {
     fetchAttributeTypes().then(setAxes).catch(() => {});
+    fetchEquipment()
+      .then((kit) => setOwned(new Set(kit.filter((k) => k.owned).map((k) => k.id))))
+      .catch(() => {});
   }, []);
 
   const toggleTag = (axis, valueId) => {
@@ -98,7 +106,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
   };
 
   const remove = async () => {
-    if (!window.confirm(`Delete "${name}"? It's removed from any workout using it.`)) return;
+    setConfirming(false);
     setBusy(true);
     try {
       await deleteExercise(exercise.id);
@@ -150,7 +158,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
                 className={`border rounded-sm py-1.5 text-xs
                             focus:outline-none focus:ring-1 focus:ring-accent
                             ${kind === k.v
-                              ? "border-accent text-accent-hi"
+                              ? "border-accent bg-accent text-on-accent font-medium"
                               : "border-line text-subtle hover:border-line-hi2"}`}
               >
                 {k.label}
@@ -211,7 +219,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
               onClick={() => setSuggestedType(t.v)}
               className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent
                           ${suggestedType === t.v
-                            ? "border-accent text-accent-hi"
+                            ? "border-accent bg-accent text-on-accent font-medium"
                             : "border-line text-muted hover:border-line-hi2"}`}
             >
               {t.label}
@@ -252,29 +260,47 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         </div>
 
         {/* --------------------------------------------------------- tags */}
-        {axes.map((axis) => (
-          <div key={axis.key} className="mt-6">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
-              {axis.label}
-              {!axis.multiValued && <span className="text-ghost"> · pick one</span>}
-            </p>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {axis.values.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => toggleTag(axis, v.id)}
-                  className={`text-xs border rounded-sm px-2 py-0.5
-                              focus:outline-none focus:ring-1 focus:ring-accent
-                              ${selected.has(v.id)
-                                ? "border-accent text-accent-hi"
-                                : "border-line text-subtle hover:border-line-hi2"}`}
-                >
-                  {v.label}
-                </button>
-              ))}
+        {axes.map((axis) => {
+          // Equipment is the axis with a visible consequence: what's tagged
+          // here is what makes the exercise show as blocked when you don't own
+          // it. Worth saying, and worth marking which ones you're short of.
+          const isKit = axis.key === "equipment";
+          return (
+            <div key={axis.key} className="mt-6">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
+                {axis.label}
+                {!axis.multiValued && <span className="text-ghost"> · pick one</span>}
+              </p>
+              {isKit && (
+                <p className="mt-1 text-[11px] text-faint">
+                  What this needs to be done. Anything you don't own is flagged wherever the
+                  exercise is listed — it's never hidden.
+                </p>
+              )}
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {axis.values.map((v) => {
+                  const on = selected.has(v.id);
+                  const short = isKit && on && !owned.has(v.id) && v.key !== "none";
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => toggleTag(axis, v.id)}
+                      title={short ? "You don't own this" : undefined}
+                      className={`text-xs border rounded-sm px-2 py-0.5
+                                  focus:outline-none focus:ring-1 focus:ring-accent
+                                  ${on
+                                    ? "border-accent bg-accent text-on-accent font-medium"
+                                    : "border-line text-subtle hover:border-line-hi2"}`}
+                    >
+                      {v.label}
+                      {short && " ·  don't have"}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {error && <p className="mt-5 text-sm text-danger">{error}</p>}
 
@@ -290,7 +316,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
 
         {!isNew && (
           <button
-            onClick={remove}
+            onClick={() => setConfirming(true)}
             disabled={busy}
             className="mt-4 w-full inline-flex items-center justify-center gap-1.5 text-xs
                        text-faint hover:text-danger disabled:opacity-50"
@@ -299,6 +325,17 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
           </button>
         )}
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title={`Delete "${name}"?`}
+          body="It's removed from any workout using it. Past sessions keep their own copy of the name, so your history is unaffected."
+          confirmLabel="Delete"
+          destructive
+          onConfirm={remove}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }

@@ -5,16 +5,10 @@ import {
 import {
   fetchWorkoutSequence, fetchPrefs, saveSession, describeTarget,
 } from "../lib/data";
+import { KINDS } from "./KindBadge";
 import {
   createSpeaker, createListener, whenVoicesReady, RECOGNITION_SUPPORTED,
 } from "../lib/speech";
-
-const KINDS = {
-  stretch: { label: "Stretch", text: "text-kind-stretch-hi", ring: "stroke-kind-stretch" },
-  strength: { label: "Strength", text: "text-kind-strength", ring: "stroke-kind-strength" },
-  core: { label: "Core", text: "text-kind-core-hi", ring: "stroke-kind-core" },
-  cardio: { label: "Cardio", text: "text-kind-cardio-hi", ring: "stroke-kind-cardio" },
-};
 
 /** "Plank, 45 seconds" / "Push ups, 10 reps, set 2 of 3" */
 function announce(step) {
@@ -545,7 +539,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
           className={`mt-3 w-full border-2 rounded-sm py-4 inline-flex items-center justify-center gap-2 text-base
                       active:bg-surface-hi focus:outline-none focus:ring-2 focus:ring-accent
                       ${listening
-                        ? "border-accent text-accent-hi"
+                        ? "border-accent bg-accent text-on-accent font-medium"
                         : "border-line-hi text-muted hover:border-line-hi3"}`}
         >
           {listening ? <Mic size={20} /> : <MicOff size={20} />}

@@ -35,7 +35,7 @@ export default function ThemeToggle({ className = "" }) {
             aria-label={label}
             title={label}
             onClick={() => choose(value)}
-            className={`p-1.5 focus:outline-none focus:ring-1 focus:ring-accent ${
+            className={`p-2 focus:outline-none focus:ring-1 focus:ring-accent ${
               active ? "bg-surface-hi text-ink" : "text-subtle hover:text-ink-dim"
             }`}
           >

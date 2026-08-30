@@ -6,6 +6,7 @@ import {
   fetchWorkoutSlots, saveWorkoutExercises, updateWorkout, deleteWorkout,
   fetchExercises, fetchAttributeTypes, describeTarget, describeRule,
 } from "../lib/data";
+import { ConfirmDialog } from "./Dialog";
 import ExerciseEditor from "./ExerciseEditor";
 
 const DAYS = [
@@ -31,6 +32,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +104,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
   };
 
   const removeWorkout = async () => {
-    if (!window.confirm(`Delete "${workout.name}"? Past sessions are kept.`)) return;
+    setConfirming(false);
     try {
       await deleteWorkout(workout.id);
       onChanged?.();
@@ -176,7 +178,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                 className={`flex-1 aspect-square rounded-sm border text-sm
                             focus:outline-none focus:ring-1 focus:ring-accent
                             ${on
-                              ? "border-accent bg-accent/10 text-accent-hi"
+                              ? "border-accent bg-accent text-on-accent font-medium"
                               : "border-line text-faint hover:border-line-hi2"}`}
               >
                 {d.label}
@@ -205,11 +207,19 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
               }}
               className={`border rounded-sm p-3 text-left focus:outline-none focus:ring-1 focus:ring-accent
                           ${orderMode === o.v
-                            ? "border-accent text-accent-hi"
+                            ? "border-accent bg-accent text-on-accent font-medium"
                             : "border-line text-muted hover:border-line-hi2"}`}
             >
               <span className="block text-sm">{o.title}</span>
-              <span className="block text-[11px] text-faint mt-0.5">{o.sub}</span>
+              {/* The unselected subtitle is `faint`, which would vanish on the
+                  accent fill — so it dims against the fill instead. */}
+              <span
+                className={`block text-[11px] mt-0.5 ${
+                  orderMode === o.v ? "text-on-accent/80 font-normal" : "text-faint"
+                }`}
+              >
+                {o.sub}
+              </span>
             </button>
           ))}
         </div>
@@ -276,7 +286,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                     onClick={() => move(i, i - 1)}
                     disabled={i === 0}
                     aria-label={`Move ${ex.name} up`}
-                    className="text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint"
+                    className="px-2 py-1 rounded-sm text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
                   >
                     <ChevronUp size={14} />
                   </button>
@@ -284,7 +294,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                     onClick={() => move(i, i + 1)}
                     disabled={i === list.length - 1}
                     aria-label={`Move ${ex.name} down`}
-                    className="text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint"
+                    className="px-2 py-1 rounded-sm text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
                   >
                     <ChevronDown size={14} />
                   </button>
@@ -343,12 +353,23 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
         </button>
 
         <button
-          onClick={removeWorkout}
+          onClick={() => setConfirming(true)}
           className="mt-4 w-full text-xs text-faint hover:text-danger"
         >
           Delete this workout
         </button>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title={`Delete "${workout.name}"?`}
+          body="Past sessions are kept — history holds its own copy of the workout name."
+          confirmLabel="Delete"
+          destructive
+          onConfirm={removeWorkout}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }
@@ -438,7 +459,7 @@ function ExercisePicker({ exclude, onPick, onClose }) {
                   className={`text-xs border rounded-sm px-2 py-0.5
                               focus:outline-none focus:ring-1 focus:ring-accent
                               ${active.includes(v.key)
-                                ? "border-accent text-accent-hi"
+                                ? "border-accent bg-accent text-on-accent font-medium"
                                 : "border-line text-subtle hover:border-line-hi2"}`}
                 >
                   {v.label}
@@ -572,7 +593,7 @@ function RuleBuilder({ onAdd, onClose }) {
                 onClick={() => setCount(n)}
                 className={`w-11 h-11 border rounded-sm focus:outline-none focus:ring-1 focus:ring-accent
                             ${count === n
-                              ? "border-accent text-accent-hi"
+                              ? "border-accent bg-accent text-on-accent font-medium"
                               : "border-line text-subtle hover:border-line-hi2"}`}
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
@@ -593,7 +614,7 @@ function RuleBuilder({ onAdd, onClose }) {
                   className={`text-xs border rounded-sm px-2 py-1
                               focus:outline-none focus:ring-1 focus:ring-accent
                               ${picked.some((x) => x.id === v.id)
-                                ? "border-accent text-accent-hi"
+                                ? "border-accent bg-accent text-on-accent font-medium"
                                 : "border-line text-subtle hover:border-line-hi2"}`}
                 >
                   {v.label}

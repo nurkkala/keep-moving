@@ -178,7 +178,9 @@ export async function setExerciseTags(exerciseId, valueIds) {
 export async function fetchAttributeTypes() {
   const { data, error } = await supabase
     .from("attribute_types")
-    .select("id, key, label, multi_valued, position, values:attribute_values (id, key, label, position)")
+    .select(
+      "id, key, label, multi_valued, position, user_id, values:attribute_values (id, key, label, description, position, user_id)"
+    )
     .order("position");
 
   if (error) throw error;
@@ -188,22 +190,119 @@ export async function fetchAttributeTypes() {
     key: t.key,
     label: t.label,
     multiValued: t.multi_valued,
+    builtIn: t.user_id === null,
     values: (t.values ?? [])
       .sort((a, b) => a.position - b.position || a.label.localeCompare(b.label))
-      .map((v) => ({ id: v.id, key: v.key, label: v.label })),
+      // Null user_id means built-in: readable by everyone, editable by nobody.
+      // Callers need this to avoid offering an edit that RLS will reject.
+      .map((v) => ({
+        id: v.id,
+        key: v.key,
+        label: v.label,
+        description: v.description ?? "",
+        builtIn: v.user_id === null,
+      })),
   }));
 }
 
-/** Adds a value the built-in vocabulary is missing, owned by this user. */
-export async function createAttributeValue(typeId, key, label) {
+/**
+ * A new axis — "phase of recovery", "practitioner" — owned by this user.
+ * The schema was built for this: it's an INSERT, not a migration.
+ */
+export async function createAttributeType(key, label, multiValued = true) {
   const user = await requireUser();
   const { data, error } = await supabase
-    .from("attribute_values")
-    .insert({ type_id: typeId, user_id: user.id, key, label })
-    .select("id, key, label")
+    .from("attribute_types")
+    .insert({ user_id: user.id, key, label, multi_valued: multiValued })
+    .select("id, key, label, multi_valued")
     .single();
   if (error) throw error;
   return data;
+}
+
+/** Renames one of your own axes. `key` is left alone for the usual reason. */
+export async function updateAttributeType(id, patch) {
+  const row = {};
+  if ("label" in patch) row.label = patch.label;
+  if ("multiValued" in patch) row.multi_valued = patch.multiValued;
+
+  const { error } = await supabase.from("attribute_types").update(row).eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Deletes one of your own axes and every value on it — which in turn drops
+ * those tags from exercises and rule slots. Much bigger than deleting a single
+ * value; say so before calling.
+ */
+export async function deleteAttributeType(id) {
+  const { error } = await supabase.from("attribute_types").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Adds a value the built-in vocabulary is missing, owned by this user. */
+export async function createAttributeValue(typeId, key, label, description = "") {
+  const user = await requireUser();
+  const { data, error } = await supabase
+    .from("attribute_values")
+    .insert({ type_id: typeId, user_id: user.id, key, label, description: description || null })
+    .select("id, key, label, description")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Renames one of your own values. Built-ins have `user_id is null` and RLS
+ * rejects the write — the caller should not offer it rather than let it fail.
+ *
+ * `key` is what rules and tags match on, so changing it is a bigger deal than
+ * changing `label`; callers should generally only pass `label`.
+ */
+export async function updateAttributeValue(id, patch) {
+  const row = {};
+  if ("key" in patch) row.key = patch.key;
+  if ("label" in patch) row.label = patch.label;
+  if ("description" in patch) row.description = patch.description || null;
+
+  const { error } = await supabase.from("attribute_values").update(row).eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Deletes one of your own values.
+ *
+ * Three things cascade, and the second is easy to miss: the tag comes off
+ * every exercise carrying it, it comes off any rule slot matching on it —
+ * which *widens* that rule, since rule tags are ANDed — and it disappears from
+ * your equipment. Check `fetchAttributeUsage` and say so before calling this.
+ */
+export async function deleteAttributeValue(id) {
+  const { error } = await supabase.from("attribute_values").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * How many exercises and rule slots reference each value, keyed by value id.
+ * Row level security already scopes both sides to what you can see, so the
+ * counts are what deleting would actually affect for you.
+ */
+export async function fetchAttributeUsage() {
+  const [tags, slots] = await Promise.all([
+    supabase.from("exercise_attributes").select("value_id"),
+    supabase.from("workout_slot_tags").select("value_id"),
+  ]);
+  if (tags.error) throw tags.error;
+  if (slots.error) throw slots.error;
+
+  const usage = {};
+  const bump = (id, field) => {
+    usage[id] ??= { exercises: 0, rules: 0 };
+    usage[id][field] += 1;
+  };
+  for (const r of tags.data ?? []) bump(r.value_id, "exercises");
+  for (const r of slots.data ?? []) bump(r.value_id, "rules");
+  return usage;
 }
 
 /* =================================================================== workouts */
@@ -808,6 +907,33 @@ export async function fetchWorkoutEquipment(workoutId) {
     owned: r.owned,
     usedBy: r.used_by,
   }));
+}
+
+/**
+ * The same thing for every workout at once, keyed by workout id.
+ *
+ * `workout_summaries.missing_equipment` is only a count, and the picker wants
+ * to name what's missing rather than say "missing kit" and make you open the
+ * workout to find out. One query beats one per card.
+ */
+export async function fetchEquipmentByWorkout() {
+  const { data, error } = await supabase
+    .from("workout_equipment")
+    .select("workout_id, value_id, label, owned, used_by")
+    .order("label");
+
+  if (error) throw error;
+
+  const byWorkout = {};
+  for (const r of data ?? []) {
+    (byWorkout[r.workout_id] ??= []).push({
+      id: r.value_id,
+      label: r.label,
+      owned: r.owned,
+      usedBy: r.used_by,
+    });
+  }
+  return byWorkout;
 }
 
 /** Things you can do instead, working the same area. */

@@ -121,6 +121,13 @@ export default function EquipmentInventory({ onBack }) {
 
                       <span className="flex-1">
                         <span className={item.owned ? "" : "text-muted"}>{item.label}</span>
+                        {/* Which one, and where it lives — the difference
+                            between knowing you own it and guessing. */}
+                        {item.description && (
+                          <span className="block text-xs text-subtle mt-0.5">
+                            {item.description}
+                          </span>
+                        )}
                         {!item.owned && unlocks > 0 && (
                           <span className="block text-xs text-warn/80 mt-0.5">
                             {unlocks} {unlocks === 1 ? "exercise needs" : "exercises need"} this
@@ -157,7 +164,7 @@ export default function EquipmentInventory({ onBack }) {
                     className={`border-2 rounded-sm py-3 text-sm
                                 focus:outline-none focus:ring-1 focus:ring-accent
                                 ${unit === o.v
-                                  ? "border-accent text-accent-hi"
+                                  ? "border-accent bg-accent text-on-accent font-medium"
                                   : "border-line text-muted hover:border-line-hi2"}`}
                   >
                     {o.label}

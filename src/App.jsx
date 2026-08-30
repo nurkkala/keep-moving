@@ -6,6 +6,8 @@ import WorkoutEditor from "./components/WorkoutEditor";
 import SessionScreen from "./components/SessionScreen";
 import History from "./components/History";
 import EquipmentInventory from "./components/EquipmentInventory";
+import ExerciseLibrary from "./components/ExerciseLibrary";
+import AttributeEditor from "./components/AttributeEditor";
 
 /**
  * One screen at a time, which suits a phone propped against a wall mid-workout.
@@ -48,12 +50,23 @@ export default function App() {
           return <EquipmentInventory onBack={home} />;
         }
 
+        if (view.name === "library") {
+          return (
+            <ExerciseLibrary onBack={home} onTags={() => setView({ name: "tags" })} />
+          );
+        }
+
+        if (view.name === "tags") {
+          return <AttributeEditor onBack={() => setView({ name: "library" })} />;
+        }
+
         return (
           <WorkoutPicker
             key={stamp}
             onSignOut={signOut}
             onHistory={() => setView({ name: "history" })}
             onEquipment={() => setView({ name: "equipment" })}
+            onLibrary={() => setView({ name: "library" })}
             onEdit={(workout) => setView({ name: "edit", workout })}
             onStart={(workout) => setView({ name: "session", workout })}
           />

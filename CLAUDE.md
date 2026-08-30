@@ -132,6 +132,20 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   scale (`kind-stretch`, `kind-strength`, `kind-core`, `kind-cardio`). Cardio
   is rose and errors are rose, but they're different tokens on purpose — don't
   reuse `danger` for cardio just because they match today.
+- **The four kinds are defined once, in `components/KindBadge.jsx`.** That map
+  was previously copied into four components with drifting shapes. Import
+  `KINDS` from there; don't redeclare it. Kind is shown as a `KindBadge` —
+  colour plus a glyph plus a `title`, because a coloured dot alone says nothing
+  to someone who doesn't know the code and nothing at all to someone who can't
+  separate the hues.
+- **Never `window.confirm`, `window.prompt`, or `window.alert`.** They can't be
+  themed, ignore the dark/light choice entirely, and render as a desktop alert
+  on a screen sized for a thumb. Use `ConfirmDialog` / `PromptDialog` from
+  `components/Dialog.jsx`, which match the sheets and handle Escape and focus.
+- **Say what an exercise needs where it's listed, not behind a tap.**
+  `EquipmentNote` renders `fetchAvailability()` output inline, and stays silent
+  for bodyweight exercises so the rows that do need something stand out. One
+  `fetchAvailability()` covers the whole library — don't query per row.
 - **Theme lives in two places, deliberately.** `localStorage` drives first
   paint via the inline script in `index.html`; `preferences.theme` is the
   cross-device copy that `syncThemeFromPrefs` adopts once a session exists. If

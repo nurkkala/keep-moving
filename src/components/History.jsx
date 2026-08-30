@@ -4,13 +4,8 @@ import {
   fetchHistory, fetchKindTotals, fetchPerformanceHistory, fetchBests,
   clearHistory, describeTarget, describeOrderMode,
 } from "../lib/data";
-
-const KINDS = {
-  stretch: { label: "Stretch", bg: "bg-kind-stretch", text: "text-kind-stretch-hi" },
-  strength: { label: "Strength", bg: "bg-kind-strength", text: "text-kind-strength" },
-  core: { label: "Core", bg: "bg-kind-core", text: "text-kind-core-hi" },
-  cardio: { label: "Cardio", bg: "bg-kind-cardio", text: "text-kind-cardio-hi" },
-};
+import KindBadge, { KINDS } from "./KindBadge";
+import { ConfirmDialog } from "./Dialog";
 
 const day = (ms) =>
   new Date(ms).toLocaleDateString(undefined, {
@@ -26,6 +21,7 @@ export default function History({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [confirming, setConfirming] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -48,7 +44,7 @@ export default function History({ onBack }) {
   const grand = Object.values(totals).reduce((a, b) => a + b, 0);
 
   const clear = async () => {
-    if (!window.confirm("Delete every saved session? This can't be undone.")) return;
+    setConfirming(false);
     await clearHistory();
     load();
   };
@@ -127,11 +123,7 @@ export default function History({ onBack }) {
                                        hover:text-ink-soft disabled:hover:text-inherit
                                        focus:outline-none focus:ring-1 focus:ring-accent"
                           >
-                            <span
-                              className={`w-1 h-1 rounded-full shrink-0 ${
-                                KINDS[it.kind]?.bg ?? "bg-track"
-                              }`}
-                            />
+                            <KindBadge kind={it.kind} size="xs" className="translate-y-px" />
                             <span className="flex-1 text-muted">{it.name}</span>
                             <span
                               className={`shrink-0 ${
@@ -157,7 +149,7 @@ export default function History({ onBack }) {
 
             {sessions.length > 0 && (
               <button
-                onClick={clear}
+                onClick={() => setConfirming(true)}
                 className="mt-6 text-xs text-faint hover:text-danger"
               >
                 Clear saved history
@@ -166,6 +158,17 @@ export default function History({ onBack }) {
           </>
         )}
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title="Clear saved history?"
+          body="Every saved session is deleted. This can't be undone."
+          confirmLabel="Delete everything"
+          destructive
+          onConfirm={clear}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }
@@ -286,9 +289,9 @@ function KindBar({ byKind, total }) {
       </div>
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
         {Object.entries(byKind).map(([kind, sec]) => (
-          <span key={kind} className="text-[11px] text-subtle">
-            <span className={KINDS[kind]?.text ?? ""}>·</span> {KINDS[kind]?.label ?? kind}{" "}
-            {Math.round(sec / 60)}m
+          <span key={kind} className="inline-flex items-center gap-1 text-[11px] text-subtle">
+            <KindBadge kind={kind} size="xs" />
+            {KINDS[kind]?.label ?? kind} {Math.round(sec / 60)}m
           </span>
         ))}
       </div>
