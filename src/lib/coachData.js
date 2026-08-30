@@ -79,7 +79,11 @@ export async function fetchExercises({ valueKeys = [], search = "" } = {}) {
     if (!ids.length) return [];
   }
 
-  let query = supabase.from("exercises").select(EXERCISE_SELECT).order("name");
+  let query = supabase
+    .from("exercises")
+    .select(EXERCISE_SELECT)
+    .order("sort_order")
+    .order("name");
   if (ids) query = query.in("id", ids);
   if (search.trim()) query = query.ilike("name", `%${search.trim()}%`);
 
