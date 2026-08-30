@@ -10,7 +10,7 @@ Three levels, each holding what's true at that level.
 workouts ──< workout_exercises >── exercises
    │                                   │
    │                                   └──< exercise_attributes >── attribute_values >── attribute_types
-   └── days_of_week, time_of_day, starts_on, ends_on
+   └── days_of_week, starts_on, ends_on
 ```
 
 `exercises` holds what's true about the movement everywhere: name, description,
@@ -21,8 +21,9 @@ optional sets, and a longer or shorter target if you want one. Leave the
 overrides null and the slot tracks the exercise's defaults — change Plank from
 45s to 60s once and every workout that hasn't overridden it follows.
 
-`workouts` holds the grouping and the schedule: a name, which days it runs, an
-optional time, and optional start and end dates for a fixed-length PT protocol.
+`workouts` holds the grouping and the schedule: a name, which days it runs,
+and optional start and end dates for a fixed-length PT protocol. Days only —
+there is no time of day.
 
 ## Scheduling
 

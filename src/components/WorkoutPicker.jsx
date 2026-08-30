@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Calendar, Clock, AlertCircle } from "lucide-react";
+import { ChevronLeft, Calendar, AlertCircle } from "lucide-react";
 import {
   fetchOrSeedWorkouts,
   fetchWorkoutExercises,
@@ -137,11 +137,6 @@ function WorkoutCard({ workout, highlight, onOpen }) {
         <span className="inline-flex items-center gap-1">
           <Calendar size={11} /> {describeDays(workout.days)}
         </span>
-        {workout.timeOfDay && (
-          <span className="inline-flex items-center gap-1">
-            <Clock size={11} /> {workout.timeOfDay.slice(0, 5)}
-          </span>
-        )}
         {workout.endsOn && <span>through {workout.endsOn}</span>}
       </div>
     </button>

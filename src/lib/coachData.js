@@ -231,7 +231,6 @@ function shapeWorkout(w) {
     description: w.description ?? "",
     days: w.days_of_week ?? [],
     daysLabel: describeDays(w.days_of_week ?? []),
-    timeOfDay: w.time_of_day ?? null,
     restSec: w.rest_sec ?? null,
     startsOn: w.starts_on ?? null,
     endsOn: w.ends_on ?? null,
@@ -274,7 +273,6 @@ export async function createWorkout(workout) {
       name: workout.name,
       description: workout.description || null,
       days_of_week: workout.days ?? [],
-      time_of_day: workout.timeOfDay || null,
       rest_sec: workout.restSec ?? null,
       starts_on: workout.startsOn || null,
       ends_on: workout.endsOn || null,
@@ -292,7 +290,6 @@ export async function updateWorkout(id, patch) {
   if ("name" in patch) row.name = patch.name;
   if ("description" in patch) row.description = patch.description || null;
   if ("days" in patch) row.days_of_week = patch.days;
-  if ("timeOfDay" in patch) row.time_of_day = patch.timeOfDay || null;
   if ("restSec" in patch) row.rest_sec = patch.restSec ?? null;
   if ("startsOn" in patch) row.starts_on = patch.startsOn || null;
   if ("endsOn" in patch) row.ends_on = patch.endsOn || null;

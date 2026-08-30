@@ -36,6 +36,8 @@ over frequency targets, every-N-days intervals, and rotating cycles.
 - An empty `days_of_week` is valid and means on-demand: the workout exists and
   can be started any time, but never appears under "Today."
 - Several workouts may share a day. They render in `position` order.
+- There is no time of day. A workout belongs to a day, not to an hour. Don't
+  add one without also building the reminder it would imply.
 
 If frequency targets ("3× a week") are ever wanted, that's a `target_per_week`
 column plus a weekly count against `sessions` — additive, not a rewrite. Doing
