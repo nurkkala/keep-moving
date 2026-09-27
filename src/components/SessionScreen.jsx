@@ -44,6 +44,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [listening, setListening] = useState(false);
+  const [micDenied, setMicDenied] = useState(false);
   const [log, setLog] = useState([]);
   const [saving, setSaving] = useState(false);
   // Kept apart from `error`, which replaces the whole screen: a failed save must
@@ -339,8 +340,14 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     const listener = createListener({
       onCommand: (cmd) => commandRef.current(cmd),
       isMuted: () => speakingRef.current,
+      onDenied: () => {
+        listenerRef.current = null;
+        setListening(false);
+        setMicDenied(true);
+      },
     });
     if (!listener) return;
+    setMicDenied(false);
 
     listener.start();
     listenerRef.current = listener;
@@ -635,6 +642,12 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         <p className="mt-4 text-center text-xs text-faint">
           <Volume2 size={11} className="inline mr-1" />
           Voice check-ins need Chrome or Edge.
+        </p>
+      )}
+
+      {micDenied && (
+        <p role="alert" className="mt-2 text-center text-xs text-danger">
+          The browser blocked the microphone. Allow it in the site settings to go hands free.
         </p>
       )}
 

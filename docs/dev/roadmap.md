@@ -36,7 +36,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
 | OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 💭 open |
 | OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 💭 open |
-| TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | 🔨 queued |
+| TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | 🔨 queued |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | 🔨 queued |
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
@@ -136,17 +136,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### TODO-18-a11y-labels — Accessible names read undefined or wrong
-
-*Added 2026-09-27 11:14:58.*
-
-- `WorkoutEditor` builds move and remove labels from the exercise name, so on a rule slot
-  a screen reader says "Move undefined up" and "Remove undefined". Use the rule's
-  description.
-- The session's plus and minus buttons say "rep" on distance sets.
-- A denied microphone permission leaves the listening button lit. The listener's error
-  should turn listening off and say why.
-
 ### TODO-19-editor-stale — Workout editor pickers show stale results
 
 *Added 2026-09-27 11:14:58.*
@@ -218,6 +207,21 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-18-a11y-labels — Accessible names read undefined or wrong
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:22:07.*
+
+- `WorkoutEditor` built move and remove labels from the exercise name, so on a rule slot
+  a screen reader said "Move undefined up" and "Remove undefined". Use the rule's
+  description.
+- The session's plus and minus buttons said "rep" on distance sets.
+- A denied microphone permission left the listening button lit. The listener's error
+  should turn listening off and say why.
+
+#### Built 2026-09-27
+
+Rule slots are labeled by their rule ("Move rule: 2 × arms up"). The distance steppers were relabeled with TODO-5-session-distance. `createListener` takes an `onDenied` callback; the session screen uses it to turn listening off and say the browser blocked the microphone.
 
 ### TODO-13-discard-confirm — Finished or edited work can be discarded without a confirmation
 

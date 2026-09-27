@@ -234,8 +234,9 @@ export function parseCommand(transcript) {
 /**
  * Continuous recognition that restarts itself, since browsers stop it after a
  * pause. `isMuted` is read live so the caller can gate it while speaking.
+ * `onDenied` fires when the browser refuses the microphone, which ends it.
  */
-export function createListener({ onCommand, isMuted }) {
+export function createListener({ onCommand, isMuted, onDenied }) {
   const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Impl) return null;
 
@@ -268,7 +269,10 @@ export function createListener({ onCommand, isMuted }) {
   };
 
   rec.onerror = (e) => {
-    if (e.error === "not-allowed" || e.error === "service-not-allowed") wanted = false;
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      wanted = false;
+      onDenied?.();
+    }
   };
 
   return {

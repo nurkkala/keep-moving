@@ -20,6 +20,9 @@ const DAYS = [
   { n: 6, label: "S", full: "Saturday" },
 ];
 
+/** A rule slot has no exercise name; its rule is what a screen reader should say. */
+const slotName = (slot) => (slot.isRule ? `rule: ${describeRule(slot)}` : slot.name);
+
 export default function WorkoutEditor({ workout, onBack, onChanged }) {
   const unit = useDistanceUnit();
   const [name, setName] = useState(workout.name);
@@ -285,7 +288,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                   <button
                     onClick={() => move(i, i - 1)}
                     disabled={i === 0}
-                    aria-label={`Move ${ex.name} up`}
+                    aria-label={`Move ${slotName(ex)} up`}
                     className="px-2 py-1 rounded-sm text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
                   >
                     <ChevronUp size={14} />
@@ -293,7 +296,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                   <button
                     onClick={() => move(i, i + 1)}
                     disabled={i === list.length - 1}
-                    aria-label={`Move ${ex.name} down`}
+                    aria-label={`Move ${slotName(ex)} down`}
                     className="px-2 py-1 rounded-sm text-faint hover:text-ink-dim disabled:opacity-20 disabled:hover:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
                   >
                     <ChevronDown size={14} />
@@ -324,7 +327,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
 
                 <button
                   onClick={() => remove(i)}
-                  aria-label={`Remove ${ex.name}`}
+                  aria-label={`Remove ${slotName(ex)}`}
                   className="text-ghost hover:text-danger p-1"
                 >
                   <Trash2 size={14} />
