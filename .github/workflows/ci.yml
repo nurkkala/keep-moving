@@ -60,7 +60,7 @@ jobs:
             echo "::notice::Skipping the drift check — add SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD and SUPABASE_PROJECT_ID to enable it."
           fi
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         if: steps.creds.outputs.ready == 'true'
         with:
           version: latest
