@@ -29,7 +29,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | 🔨 queued |
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | 🔨 queued |
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
-| OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | 🔨 queued |
+| OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | 🔨 queued |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | 🔨 queued |
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 💭 open |
@@ -166,24 +166,6 @@ Two defects in `TargetSheet.jsx`:
 
 Build: one RPC per save, in a migration, following `save_workout_exercises`.
 
-### OPEN-11-rest-pref — Should preferences.rest_sec drive the rest timer?
-
-*Added 2026-09-27 11:14:57.*
-
-`preferences.rest_sec` is read by `fetchPrefs` and writable through `savePrefs`, but
-nothing uses it: rest length comes from `workouts.rest_sec`, falling back to 15.
-`CLAUDE.md` asks that a stored value the app does not honor be removed.
-
-Recommendation: drop the column. Rest length belongs to a workout, where it is already set
-and honored. Keep it only if a per-user default for new workouts is wanted, in which case
-`WorkoutPicker`'s hard-coded 15 for a new workout should read it.
-
-#### Ruled yes, queued 2026-09-27: drop the column
-
-The owner chose to drop it. Build: a migration removing `preferences.rest_sec`, and the
-field removed from `fetchPrefs`, `savePrefs` and the defaults in `data.js`. Rest stays a
-property of each workout.
-
 ### TODO-12-silent-errors — Failed loads render as empty states
 
 *Added 2026-09-27 11:14:57.*
@@ -298,6 +280,29 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### OPEN-11-rest-pref — Should preferences.rest_sec drive the rest timer?
+
+*Added 2026-09-27 11:14:57 · done 2026-09-27 12:15:46.*
+
+`preferences.rest_sec` was read by `fetchPrefs` and writable through `savePrefs`, but
+nothing used it: rest length came from `workouts.rest_sec`, falling back to 15.
+`CLAUDE.md` asks that a stored value the app does not honor be removed.
+
+Recommendation: drop the column. Rest length belongs to a workout, where it is already set
+and honored. Keep it only if a per-user default for new workouts is wanted, in which case
+`WorkoutPicker`'s hard-coded 15 for a new workout should read it.
+
+#### Ruled yes, queued 2026-09-27: drop the column
+
+The owner chose to drop it. Build: a migration removing `preferences.rest_sec`, and the
+field removed from `fetchPrefs`, `savePrefs` and the defaults in `data.js`. Rest stays a
+property of each workout.
+
+Built the same day: `data.js` stopped selecting and writing the column, and migration
+`20260927161218_drop_preferences_rest_sec` dropped it and commented `workouts.rest_sec`
+with the real fallback. Applied to the linked project; `make db-check` reported 28
+migrations agreeing.
 
 ### OPEN-21-us-spelling — Should metres become meters in copy and identifiers?
 
