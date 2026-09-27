@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Trash2 } from "lucide-react";
 import {
-  createExercise, updateExercise, deleteExercise, setExerciseTags,
+  saveExercise, deleteExercise,
   fetchAttributeTypes,
   fetchEquipment,
 } from "../lib/data";
@@ -91,12 +91,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
     };
 
     try {
-      if (isNew) {
-        await createExercise(payload, [...selected]);
-      } else {
-        await updateExercise(exercise.id, payload);
-        await setExerciseTags(exercise.id, [...selected]);
-      }
+      await saveExercise(isNew ? null : exercise.id, payload, [...selected]);
       onSaved?.();
       onClose();
     } catch (e) {

@@ -57,8 +57,9 @@ Row level security does the access control, so queries don't filter on
 `user_id` by hand. If you find yourself adding `.eq("user_id", ...)` to a read,
 the policy is probably what needs fixing instead.
 
-Multi-row writes go through the `security invoker` RPCs (`save_workout_exercises`,
-`save_session`) so a dropped connection can't leave half a workout behind.
+Multi-row writes go through the `security invoker` RPCs (`save_workout`,
+`save_exercise`, `save_session`) so a dropped connection can't leave half a
+workout behind.
 
 See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 

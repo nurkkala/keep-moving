@@ -105,14 +105,15 @@ export async function fetchExercise(id) {
   return data ? shapeExercise(data) : null;
 }
 
-/** Creates a user-owned exercise. `valueIds` are attribute_values ids. */
-export async function createExercise(ex, valueIds = []) {
-  const user = await requireUser();
-
-  const { data, error } = await supabase
-    .from("exercises")
-    .insert({
-      user_id: user.id,
+/**
+ * Creates (`id` null) or updates a user-owned exercise and replaces its tags,
+ * in one transaction. `valueIds` are attribute_values ids. Built-in exercises
+ * are read-only; the RPC rejects them.
+ */
+export async function saveExercise(id, ex, valueIds = []) {
+  const { data, error } = await supabase.rpc("save_exercise", {
+    target_exercise: id ?? null,
+    fields: {
       name: ex.name,
       kind: ex.kind,
       description: ex.description || null,
@@ -121,50 +122,15 @@ export async function createExercise(ex, valueIds = []) {
       suggested_type: ex.suggestedType,
       suggested_value: ex.suggestedValue,
       suggested_sets: ex.suggestedSets ?? 1,
-    })
-    .select("id")
-    .single();
-
+    },
+    tag_ids: valueIds,
+  });
   if (error) throw error;
-  if (valueIds.length) await setExerciseTags(data.id, valueIds);
-
-  return fetchExercise(data.id);
-}
-
-/** Built-in exercises are read-only; RLS will reject an update to one. */
-export async function updateExercise(id, patch) {
-  const row = {};
-  if ("name" in patch) row.name = patch.name;
-  if ("kind" in patch) row.kind = patch.kind;
-  if ("description" in patch) row.description = patch.description || null;
-  if ("instructions" in patch) row.instructions = patch.instructions || null;
-  if ("videoUrl" in patch) row.video_url = patch.videoUrl || null;
-  if ("suggestedType" in patch) row.suggested_type = patch.suggestedType;
-  if ("suggestedValue" in patch) row.suggested_value = patch.suggestedValue;
-  if ("suggestedSets" in patch) row.suggested_sets = patch.suggestedSets;
-
-  const { error } = await supabase.from("exercises").update(row).eq("id", id);
-  if (error) throw error;
+  return fetchExercise(data);
 }
 
 export async function deleteExercise(id) {
   const { error } = await supabase.from("exercises").delete().eq("id", id);
-  if (error) throw error;
-}
-
-/** Replaces the whole tag set for one exercise. */
-export async function setExerciseTags(exerciseId, valueIds) {
-  const { error: clearError } = await supabase
-    .from("exercise_attributes")
-    .delete()
-    .eq("exercise_id", exerciseId);
-  if (clearError) throw clearError;
-
-  if (!valueIds.length) return;
-
-  const { error } = await supabase
-    .from("exercise_attributes")
-    .insert(valueIds.map((value_id) => ({ exercise_id: exerciseId, value_id })));
   if (error) throw error;
 }
 
@@ -454,19 +420,6 @@ export async function createWorkout(workout) {
   return data.id;
 }
 
-export async function updateWorkout(id, patch) {
-  const row = {};
-  if ("name" in patch) row.name = patch.name;
-  if ("description" in patch) row.description = patch.description || null;
-  if ("days" in patch) row.days_of_week = patch.days;
-  if ("orderMode" in patch) row.order_mode = patch.orderMode;
-  if ("restSec" in patch) row.rest_sec = patch.restSec ?? null;
-  if ("position" in patch) row.position = patch.position;
-
-  const { error } = await supabase.from("workouts").update(row).eq("id", id);
-  if (error) throw error;
-}
-
 export async function deleteWorkout(id) {
   const { error } = await supabase.from("workouts").delete().eq("id", id);
   if (error) throw error;
@@ -574,10 +527,11 @@ export function describeRule(slot) {
 }
 
 /**
- * Replaces a workout's slots, atomically. Each is either a fixed exercise or
- * a rule; the RPC rejects a slot that tries to be both.
+ * Saves a workout's own fields and replaces its slots, in one transaction.
+ * Each slot is either a fixed exercise or a rule; the RPC rejects a slot that
+ * tries to be both.
  */
-export async function saveWorkoutExercises(workoutId, list) {
+export async function saveWorkout(workoutId, { name, days, orderMode, restSec }, list) {
   const items = list.map((slot) =>
     slot.isRule
       ? {
@@ -588,8 +542,9 @@ export async function saveWorkoutExercises(workoutId, list) {
       : { exercise_id: slot.exerciseId, note: slot.note || null }
   );
 
-  const { error } = await supabase.rpc("save_workout_exercises", {
+  const { error } = await supabase.rpc("save_workout", {
     target_workout: workoutId,
+    fields: { name, days, order_mode: orderMode, rest_sec: restSec ?? null },
     items,
   });
   if (error) throw error;

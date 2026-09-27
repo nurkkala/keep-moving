@@ -4,7 +4,7 @@ import {
   ChevronLeft, ChevronUp, ChevronDown, Trash2, Plus, Search, X, Shuffle,
 } from "lucide-react";
 import {
-  fetchWorkoutSlots, saveWorkoutExercises, updateWorkout, deleteWorkout,
+  fetchWorkoutSlots, saveWorkout, deleteWorkout,
   fetchExercises, fetchAttributeTypes, describeTarget, describeRule,
 } from "../lib/data";
 import { ConfirmDialog } from "./Dialog";
@@ -92,10 +92,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
     setSaving(true);
     setError(null);
     try {
-      await Promise.all([
-        updateWorkout(workout.id, { name, days, orderMode, restSec }),
-        saveWorkoutExercises(workout.id, list),
-      ]);
+      await saveWorkout(workout.id, { name, days, orderMode, restSec }, list);
       setDirty(false);
       onChanged?.();
       onBack();

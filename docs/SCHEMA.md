@@ -154,7 +154,7 @@ cleanly removes its tags. The cost is a join to read tags, which the
 Both `attribute_types` and `attribute_values` have a nullable `user_id`. Null
 means built-in: everyone can read it, nobody can edit it. Your own additions sit
 alongside. Same for `exercises` — the seeded thirteen are shared and read-only,
-and `createExercise` makes ones you own.
+and `saveExercise` makes ones you own.
 
 ### Why `kind` stayed a real column
 
@@ -212,6 +212,8 @@ from the user's own `performance_history` rather than tuning the numbers.
 | Function | Volatility | Does |
 | --- | --- | --- |
 | `save_workout_exercises(workout_id, items jsonb)` | volatile | Replaces a workout's slots and their tags, in one transaction |
+| `save_workout(workout_id, fields jsonb, items jsonb)` | volatile | Updates a workout's own fields and replaces its slots, in one transaction |
+| `save_exercise(exercise_id, fields jsonb, tag_ids uuid[])` | volatile | Creates or updates an owned exercise and replaces its tags, in one transaction |
 | `save_session(total_sec, items jsonb, workout_id, mode)` | volatile | Writes a session and its per-set items, in one transaction |
 | `set_exercise_target(exercise, type, value, sets, note)` | volatile | Upserts the user's target for one exercise |
 | `resolve_workout(workout_id)` | **volatile** | Slots → concrete exercises, choosing for rule slots |
@@ -250,12 +252,12 @@ functions, all returning camelCase shapes rather than raw rows.
 ```js
 import {
   // catalog
-  fetchExercises, fetchExercise, createExercise, updateExercise,
-  deleteExercise, setExerciseTags, fetchAttributeTypes, createAttributeValue,
+  fetchExercises, fetchExercise, saveExercise, deleteExercise,
+  fetchAttributeTypes, createAttributeValue,
   // workouts and slots
   fetchWorkouts, fetchWorkoutsForDay, fetchOrSeedWorkouts,
-  createWorkout, updateWorkout, deleteWorkout,
-  fetchWorkoutExercises, fetchWorkoutSlots, saveWorkoutExercises,
+  createWorkout, saveWorkout, deleteWorkout,
+  fetchWorkoutExercises, fetchWorkoutSlots,
   fetchWorkoutSequence, previewWorkout, describeRule, describeDays,
   // targets
   fetchTargets, setExerciseTarget, clearExerciseTarget,
