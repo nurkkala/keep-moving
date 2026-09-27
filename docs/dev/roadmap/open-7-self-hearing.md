@@ -17,3 +17,8 @@ Unverified: this was inferred from reading `speech.js`. Settle it first by runni
 in Chrome with the speaker audible to the microphone and logging what the listener hears.
 If it reproduces, the likely fix is to keep the mute on for a short tail after `onend`, or to
 drop results whose timestamps overlap speech.
+
+#### Left open 2026-09-27
+
+The owner chose to wait until the coach is seen acting on its own cues in use, and to
+guard nothing speculatively. Reproduction steps stay as written above.

@@ -32,10 +32,10 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | ✅ done |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | ✅ done |
-| OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 💭 open |
+| OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 🔨 queued |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
-| OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 💭 open |
-| OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 💭 open |
+| OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 🔨 queued |
+| OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 🔨 queued |
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | ✅ done |
@@ -64,6 +64,29 @@ in Chrome with the speaker audible to the microphone and logging what the listen
 If it reproduces, the likely fix is to keep the mute on for a short tail after `onend`, or to
 drop results whose timestamps overlap speech.
 
+#### Left open 2026-09-27
+
+The owner chose to wait until the coach is seen acting on its own cues in use, and to
+guard nothing speculatively. Reproduction steps stay as written above.
+
+### OPEN-24-double-seed — The default workout may seed twice in development
+
+*Added 2026-09-27 11:14:59.*
+
+Under React StrictMode in development, effects run twice, so `fetchOrSeedWorkouts` may run
+twice concurrently. If `seed_default_workout` checks for existing workouts without a lock
+or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
+before changing anything. A unique constraint or an advisory lock in the function would
+close it; production is unaffected, since StrictMode's double run is development-only.
+
+#### To measure, 2026-09-27
+
+The owner asked for the measurement before any ruling: read `seed_default_workout`, run
+two concurrent calls for a user with no workouts inside a rolled-back transaction, and fix
+with a lock or a constraint only if it seeds twice.
+
+## Queue
+
 ### OPEN-14-tests-lint — Is there a test suite and a linter?
 
 *Added 2026-09-27 11:14:57.*
@@ -77,6 +100,21 @@ distance conversions in `data.js`, and `describeTarget`, and ESLint with the Rea
 rules, which would flag the stale-dependency class of bug in the session screen. Wire both
 into `make check` and CI. Out of scope: component or end-to-end tests against Supabase.
 
+#### Ruled yes, queued 2026-09-27: Vitest and ESLint
+
+The owner chose both, as recommended above: Vitest for `parseCommand`, the distance
+conversions and `describeTarget`, ESLint with the React hooks rules, and both wired into
+`make check` and CI. The fixes made on 2026-09-27 are the first things worth pinning.
+
+### TODO-15-leaked-passwords — Turn on leaked-password protection
+
+*Added 2026-09-27 11:14:57.*
+
+The Supabase security advisor reports leaked-password protection disabled on 2026-09-27.
+It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under Auth, with
+no migration and nothing to build:
+https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
 ### OPEN-16-voice-prefs — Voice preferences are stored but cannot be set
 
 *Added 2026-09-27 11:14:57.*
@@ -89,6 +127,13 @@ Recommendation: build a small voice picker in the preferences sheet, since voice
 great deal between devices and the coach is the app's main output. The alternative is to
 drop the three columns and the two helpers.
 
+#### Ruled yes, queued 2026-09-27: build the picker
+
+The owner chose a voice picker over dropping the columns. Build: a voice list and a speed
+control in the settings screen, with a sample line to hear the choice, writing
+`voice_uri`, `voice_name` and `rate` through `savePrefs`. `tierOf` and `prettyVoice` in
+`speech.js` are its starting point.
+
 ### OPEN-17-pace-display — Pace is computable and never shown
 
 *Added 2026-09-27 11:14:58.*
@@ -100,26 +145,10 @@ Recommendation: show it on distance rows in History and on the completion screen
 user's unit, which `useDistanceUnit` now supplies (TODO-5-session-distance, done). Otherwise delete
 `describePace` with the rest of TODO-23-dead-code.
 
-### OPEN-24-double-seed — The default workout may seed twice in development
+#### Ruled yes, queued 2026-09-27: show it
 
-*Added 2026-09-27 11:14:59.*
-
-Under React StrictMode in development, effects run twice, so `fetchOrSeedWorkouts` may run
-twice concurrently. If `seed_default_workout` checks for existing workouts without a lock
-or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
-before changing anything. A unique constraint or an advisory lock in the function would
-close it; production is unaffected, since StrictMode's double run is development-only.
-
-## Queue
-
-### TODO-15-leaked-passwords — Turn on leaked-password protection
-
-*Added 2026-09-27 11:14:57.*
-
-The Supabase security advisor reports leaked-password protection disabled on 2026-09-27.
-It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under Auth, with
-no migration and nothing to build:
-https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+The owner chose to show pace: on distance sets in History and on the session's completion
+screen, in the user's unit, through `describePace`.
 
 ### TODO-25-ci-upkeep — CI actions and runner image need updating
 

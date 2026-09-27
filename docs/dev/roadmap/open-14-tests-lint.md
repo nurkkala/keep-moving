@@ -1,7 +1,7 @@
 ---
 label: OPEN-14-tests-lint
 title: "Is there a test suite and a linter?"
-state: open
+state: queued
 added: 2026-09-27 11:14:57
 priority: 4
 ---
@@ -16,3 +16,9 @@ Recommendation: add Vitest (it shares Vite's config) with tests for `parseComman
 distance conversions in `data.js`, and `describeTarget`, and ESLint with the React hooks
 rules, which would flag the stale-dependency class of bug in the session screen. Wire both
 into `make check` and CI. Out of scope: component or end-to-end tests against Supabase.
+
+#### Ruled yes, queued 2026-09-27: Vitest and ESLint
+
+The owner chose both, as recommended above: Vitest for `parseCommand`, the distance
+conversions and `describeTarget`, ESLint with the React hooks rules, and both wired into
+`make check` and CI. The fixes made on 2026-09-27 are the first things worth pinning.

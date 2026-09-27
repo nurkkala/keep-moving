@@ -13,3 +13,9 @@ twice concurrently. If `seed_default_workout` checks for existing workouts witho
 or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
 before changing anything. A unique constraint or an advisory lock in the function would
 close it; production is unaffected, since StrictMode's double run is development-only.
+
+#### To measure, 2026-09-27
+
+The owner asked for the measurement before any ruling: read `seed_default_workout`, run
+two concurrent calls for a user with no workouts inside a rolled-back transaction, and fix
+with a lock or a constraint only if it seeds twice.
