@@ -40,7 +40,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | ✅ done |
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
-| TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | 🔨 queued |
+| TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | ✅ done |
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | 🔨 queued |
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
@@ -136,14 +136,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
-
-*Added 2026-09-27 11:14:58.*
-
-`ExerciseEditor.jsx` declares its own `const KINDS` as an array of labels. `CLAUDE.md`
-names `components/KindBadge.jsx` as the one definition, after four drifting copies had to
-be merged. Derive the list from the imported `KINDS`.
-
 ### TODO-23-dead-code — Unused exports in data.js and speech.js
 
 *Added 2026-09-27 11:14:58.*
@@ -186,6 +178,18 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:23:10.*
+
+`ExerciseEditor.jsx` declared its own `const KINDS` as an array of labels. `CLAUDE.md`
+names `components/KindBadge.jsx` as the one definition, after four drifting copies had to
+be merged. Derive the list from the imported `KINDS`.
+
+#### Built 2026-09-27
+
+`ExerciseEditor` imports `KINDS` and derives its option list with `Object.entries`, keeping the map's order.
 
 ### TODO-20-history-stat — The history summary divides all-time minutes by at most 40 sessions
 

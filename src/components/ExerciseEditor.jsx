@@ -6,13 +6,9 @@ import {
   fetchEquipment,
 } from "../lib/data";
 import { ConfirmDialog } from "./Dialog";
+import { KINDS } from "./KindBadge";
 
-const KINDS = [
-  { v: "stretch", label: "Stretch" },
-  { v: "strength", label: "Strength" },
-  { v: "core", label: "Core" },
-  { v: "cardio", label: "Cardio" },
-];
+const KIND_OPTIONS = Object.entries(KINDS).map(([v, { label }]) => ({ v, label }));
 
 /**
  * Creates or edits an exercise the user owns. Built-in exercises are shared
@@ -146,7 +142,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
         <div className="mt-5">
           <span className="text-[11px] uppercase tracking-[0.2em] text-subtle">Category</span>
           <div className="mt-1.5 grid grid-cols-4 gap-1.5">
-            {KINDS.map((k) => (
+            {KIND_OPTIONS.map((k) => (
               <button
                 key={k.v}
                 onClick={() => setKind(k.v)}
