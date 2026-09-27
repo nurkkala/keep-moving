@@ -158,6 +158,13 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     [step, elapsed, log, idx, steps.length, restSec, goPhase, speak]
   );
 
+  // Cutting a rest or the opening countdown short. The step at `idx` is the
+  // one about to begin, so closing it out here would log it before it ran.
+  const startNow = useCallback(() => {
+    speak("Begin.", true);
+    goPhase("work");
+  }, [speak, goPhase]);
+
   /* ------------------------------------------------------- cues + transitions */
 
   useEffect(() => {
@@ -248,6 +255,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       }
 
       if (cmd.type === "done") {
+        if (phase !== "work") return startNow();
         return closeOut("voice", cmd.value ?? repCount);
       }
 
@@ -268,7 +276,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         speak(`${cmd.value}.`);
       }
     },
-    [paused, step, phase, repCount, closeOut, speak]
+    [paused, step, phase, repCount, closeOut, startNow, speak]
   );
 
   const commandRef = useRef(handleCommand);
@@ -498,7 +506,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
       {/* The primary action is deliberately enormous and alone on its row. */}
       <button
-        onClick={() => closeOut(phase === "work" ? "tap" : "skipped", repCount)}
+        onClick={() => (phase === "work" ? closeOut("tap", repCount) : startNow())}
         className="mt-7 w-full bg-accent text-on-accent rounded-sm py-7
                    inline-flex items-center justify-center gap-3 text-xl font-medium
                    active:bg-accent-lo hover:bg-accent-hi

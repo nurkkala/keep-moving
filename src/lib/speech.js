@@ -198,9 +198,17 @@ export function parseCommand(transcript) {
     if (n) return { type: "extend", seconds: n };
   }
 
+  /* -------------------------------------------------- a stated final count */
+  // "I only did eight" and "stopped at ten" name the total, not a shortfall:
+  // read as a delta, eight fewer than a target of twelve logged four.
+  if (/\b(only (did|got|managed)|stopped at)\b/.test(t)) {
+    const n = numberIn(t);
+    if (n !== null) return { type: "count", value: n };
+  }
+
   /* ------------------------------------------------------------ adjustments */
   const more = /\b(more|extra|another|added|additional|over|past|beyond)\b/.test(t);
-  const fewer = /\b(fewer|less|short|only did|couldn'?t|stopped at|down|under)\b/.test(t);
+  const fewer = /\b(fewer|less|short|couldn'?t|down|under)\b/.test(t);
 
   if (more || fewer) {
     const n = numberIn(t);
