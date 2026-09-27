@@ -1,12 +1,13 @@
 ---
 label: OPEN-24-double-seed
 title: "The default workout may seed twice in development"
-state: open
+state: done
 added: 2026-09-27 11:14:59
+closed: 2026-09-27 12:57:36
 priority: 6
 ---
 
-*Added 2026-09-27 11:14:59.*
+*Added 2026-09-27 11:14:59 · done 2026-09-27 12:57:36.*
 
 Under React StrictMode in development, effects run twice, so `fetchOrSeedWorkouts` may run
 twice concurrently. If `seed_default_workout` checks for existing workouts without a lock
@@ -35,3 +36,7 @@ production project, and two concurrent connections, which the SQL tool used here
 offer. The candidate fix is `perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));`
 as the function's first statement, after which the second call waits and finds the first
 call's workout. Whether to apply it without a reproduction is the owner's call.
+
+#### Built 2026-09-27
+
+The owner chose to apply the lock without a live reproduction. Migration `20260927164822_serialize_default_workout_seed` makes the lock the function's first statement. A rolled-back dry run as the owner called it twice in one transaction and got the existing workout both times, with one workout visible. Applied; `make db-check` reported 31 migrations agreeing. The overlapping-call case itself remains untested.

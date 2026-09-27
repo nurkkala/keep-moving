@@ -42,7 +42,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | ✅ done |
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | ✅ done |
-| OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
+| OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | ✅ done |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
 | TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | ✅ done |
 | OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | ✅ done |
@@ -69,38 +69,6 @@ drop results whose timestamps overlap speech.
 
 The owner chose to wait until the coach is seen acting on its own cues in use, and to
 guard nothing speculatively. Reproduction steps stay as written above.
-
-### OPEN-24-double-seed — The default workout may seed twice in development
-
-*Added 2026-09-27 11:14:59.*
-
-Under React StrictMode in development, effects run twice, so `fetchOrSeedWorkouts` may run
-twice concurrently. If `seed_default_workout` checks for existing workouts without a lock
-or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
-before changing anything. A unique constraint or an advisory lock in the function would
-close it; production is unaffected, since StrictMode's double run is development-only.
-
-#### To measure, 2026-09-27
-
-The owner asked for the measurement before any ruling: read `seed_default_workout`, run
-two concurrent calls for a user with no workouts inside a rolled-back transaction, and fix
-with a lock or a constraint only if it seeds twice.
-
-#### Measured by reading, 2026-09-27
-
-The live `seed_default_workout` (read with `pg_get_functiondef`) tests
-`exists (select 1 from public.workouts where user_id = auth.uid())` and then inserts,
-with no lock, and `workouts` has no constraint that would reject a second default. Under
-READ COMMITTED two overlapping calls both see no rows and both insert, so the race exists
-by construction. `WorkoutPicker` calls `fetchOrSeedWorkouts` from a mount effect and
-`main.jsx` renders under `StrictMode`, so a new user in development makes two overlapping
-calls.
-
-Not run: a live reproduction needs a user with no workouts, meaning a new account on the
-production project, and two concurrent connections, which the SQL tool used here does not
-offer. The candidate fix is `perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));`
-as the function's first statement, after which the second call waits and finds the first
-call's workout. Whether to apply it without a reproduction is the owner's call.
 
 ### OPEN-29-compiler-lint — Adopt the React Compiler lint rules?
 
@@ -155,6 +123,42 @@ input, which this workflow never set). The Ubuntu 26 half stays open until a run
 2026-10-19 has been checked.
 
 ## Settled
+
+### OPEN-24-double-seed — The default workout may seed twice in development
+
+*Added 2026-09-27 11:14:59 · done 2026-09-27 12:57:36.*
+
+Under React StrictMode in development, effects run twice, so `fetchOrSeedWorkouts` may run
+twice concurrently. If `seed_default_workout` checks for existing workouts without a lock
+or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
+before changing anything. A unique constraint or an advisory lock in the function would
+close it; production is unaffected, since StrictMode's double run is development-only.
+
+#### To measure, 2026-09-27
+
+The owner asked for the measurement before any ruling: read `seed_default_workout`, run
+two concurrent calls for a user with no workouts inside a rolled-back transaction, and fix
+with a lock or a constraint only if it seeds twice.
+
+#### Measured by reading, 2026-09-27
+
+The live `seed_default_workout` (read with `pg_get_functiondef`) tests
+`exists (select 1 from public.workouts where user_id = auth.uid())` and then inserts,
+with no lock, and `workouts` has no constraint that would reject a second default. Under
+READ COMMITTED two overlapping calls both see no rows and both insert, so the race exists
+by construction. `WorkoutPicker` calls `fetchOrSeedWorkouts` from a mount effect and
+`main.jsx` renders under `StrictMode`, so a new user in development makes two overlapping
+calls.
+
+Not run: a live reproduction needs a user with no workouts, meaning a new account on the
+production project, and two concurrent connections, which the SQL tool used here does not
+offer. The candidate fix is `perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));`
+as the function's first statement, after which the second call waits and finds the first
+call's workout. Whether to apply it without a reproduction is the owner's call.
+
+#### Built 2026-09-27
+
+The owner chose to apply the lock without a live reproduction. Migration `20260927164822_serialize_default_workout_seed` makes the lock the function's first statement. A rolled-back dry run as the owner called it twice in one transaction and got the existing workout both times, with one workout visible. Applied; `make db-check` reported 31 migrations agreeing. The overlapping-call case itself remains untested.
 
 ### OPEN-17-pace-display — Pace is computable and never shown
 
