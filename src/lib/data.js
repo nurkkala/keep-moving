@@ -633,10 +633,12 @@ export async function fetchOrSeedWorkouts() {
  * a target is current state, not a log. The record of what you actually did
  * lives in session history, which is where progression is read from.
  */
-export async function fetchTargets() {
-  const { data, error } = await supabase
+export async function fetchTargets(exerciseId = null) {
+  let query = supabase
     .from("exercise_targets")
     .select("exercise_id, target_type, target_value, sets, note, updated_at");
+  if (exerciseId) query = query.eq("exercise_id", exerciseId);
+  const { data, error } = await query;
 
   if (error) throw error;
 

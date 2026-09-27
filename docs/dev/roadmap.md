@@ -27,7 +27,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-6-save-retry | [A failed save loses the whole session](#todo-6-save-retry--a-failed-save-loses-the-whole-session) | ✅ done |
 | OPEN-7-self-hearing | [The coach may hear its own cues](#open-7-self-hearing--the-coach-may-hear-its-own-cues) | 💭 open |
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | ✅ done |
-| TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | 🔨 queued |
+| TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | ✅ done |
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | 🔨 queued |
@@ -111,20 +111,6 @@ before changing anything. A unique constraint or an advisory lock in the functio
 close it; production is unaffected, since StrictMode's double run is development-only.
 
 ## Queue
-
-### TODO-9-target-sheet — The target sheet corrupts a target on a type switch and wipes its note
-
-*Added 2026-09-27 11:14:56.*
-
-Two defects in `TargetSheet.jsx`:
-
-- Switching the target type keeps the number. A 30-second target becomes 30 meters (shown
-  as 0.02 mi); a 5000-meter target saved as time becomes 5000 seconds. Reset the value to a
-  default for the new type, or to the exercise's suggestion.
-- `note` starts as `""` and is always sent, so every save wipes the note already stored on
-  `exercise_targets`. The only reader, `fetchTargets`, is imported nowhere
-  (TODO-23-dead-code), so a note is currently write-only. Load it with the target, or drop
-  the field if nothing is meant to show it.
 
 ### TODO-10-atomic-saves — Exercise and workout saves can half-succeed
 
@@ -218,8 +204,8 @@ be merged. Derive the list from the imported `KINDS`.
 *Added 2026-09-27 11:14:58.*
 
 Exported and imported nowhere: `describePace` (see OPEN-17-pace-display),
-`fetchWorkoutsForDay`, `previewWorkout`, `fetchTargets` (see TODO-9-target-sheet) and
-`deleteSession` in `data.js`. `formatDistance` and `fetchWorkouts` are used only inside
+`fetchWorkoutsForDay`, `previewWorkout` and `deleteSession` in `data.js`. (`fetchTargets`
+was on this list until TODO-9-target-sheet put it to use.) `formatDistance` and `fetchWorkouts` are used only inside
 `data.js` and need not be exported. In `speech.js`, `tierOf` and `prettyVoice` are unused
 (see OPEN-16-voice-prefs) and `current` is written and never read.
 
@@ -255,6 +241,24 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-9-target-sheet — The target sheet corrupts a target on a type switch and wipes its note
+
+*Added 2026-09-27 11:14:56 · done 2026-09-27 12:18:50.*
+
+Two defects in `TargetSheet.jsx`, as found:
+
+- Switching the target type keeps the number. A 30-second target becomes 30 meters (shown
+  as 0.02 mi); a 5000-meter target saved as time becomes 5000 seconds. Reset the value to a
+  default for the new type, or to the exercise's suggestion.
+- `note` starts as `""` and is always sent, so every save wipes the note already stored on
+  `exercise_targets`. The only reader, `fetchTargets`, is imported nowhere
+  (TODO-23-dead-code), so a note is currently write-only. Load it with the target, or drop
+  the field if nothing is meant to show it.
+
+#### Built 2026-09-27
+
+Switching type now resets the value: to the exercise's own value when switching back to its type, otherwise 30 seconds, 10 reps, or one mile or kilometer. The sheet loads the saved note with `fetchTargets(exerciseId)`, which takes an optional filter now, and fills the field unless the user has already typed. `fetchTargets` is therefore no longer dead code (TODO-23-dead-code updated).
 
 ### TODO-8-wall-clock — Session time drifts from the wall clock
 

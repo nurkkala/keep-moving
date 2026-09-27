@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, RotateCcw } from "lucide-react";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import {
-  setExerciseTarget, clearExerciseTarget, describeTarget,
+  setExerciseTarget, clearExerciseTarget, describeTarget, fetchTargets,
   toMeters, fromMeters,
 } from "../lib/data";
 
@@ -19,6 +19,35 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
   const unit = useDistanceUnit();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+
+  // The note lives on the user's target row, which `exercise` doesn't carry
+  // (its `note` is the workout slot's). Saving always sends a note, so without
+  // this every save erased the one already there.
+  useEffect(() => {
+    let canceled = false;
+    fetchTargets(exercise.exerciseId)
+      .then((t) => {
+        const saved = t[exercise.exerciseId]?.note;
+        if (!canceled && saved) setNote((typed) => typed || saved);
+      })
+      .catch(() => {});
+    return () => {
+      canceled = true;
+    };
+  }, [exercise.exerciseId]);
+
+  // A number means nothing once its unit changes: 30 seconds is not 30 meters.
+  // Switching type starts from the exercise's own value for that type, or a
+  // plain default.
+  const switchType = (next) => {
+    if (next === targetType) return;
+    setTargetType(next);
+    if (next === exercise.targetType && exercise.targetValue) {
+      setTargetValue(exercise.targetValue);
+    } else {
+      setTargetValue(next === "time" ? 30 : next === "reps" ? 10 : toMeters(1, unit));
+    }
+  };
 
   const save = async () => {
     if (!targetValue || targetValue < 1) {
@@ -97,7 +126,7 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
           ].map((t) => (
             <button
               key={t.v}
-              onClick={() => setTargetType(t.v)}
+              onClick={() => switchType(t.v)}
               className={`border rounded-sm py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent
                           ${targetType === t.v
                             ? "border-accent bg-accent text-on-accent font-medium"
