@@ -38,7 +38,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 💭 open |
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
-| TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | 🔨 queued |
+| TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | ✅ done |
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | 🔨 queued |
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | 🔨 queued |
@@ -136,15 +136,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### TODO-20-history-stat — The history summary divides all-time minutes by at most 40 sessions
-
-*Added 2026-09-27 11:14:58.*
-
-The History header reads "N min across M sessions". `N` is all-time minutes from
-`fetchKindTotals`, and `M` is `sessions.length`, which `fetchHistory` caps at 40. Past 40
-sessions the line pairs two different populations. Count sessions in the same query as the
-totals.
-
 ### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
 
 *Added 2026-09-27 11:14:58.*
@@ -195,6 +186,19 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-20-history-stat — The history summary divides all-time minutes by at most 40 sessions
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:22:56.*
+
+The History header reads "N min across M sessions". `N` is all-time minutes from
+`fetchKindTotals`, and `M` was `sessions.length`, which `fetchHistory` caps at 40. Past 40
+sessions the line paired two different populations. Count sessions in the same query as the
+totals.
+
+#### Built 2026-09-27
+
+`M` now comes from `fetchSessionCount`, a head-only count of `sessions`, loaded alongside the totals. A separate request stood in for the "same query" the ticket asked for, since `kind_totals` is a view and a count needs no migration.
 
 ### TODO-19-editor-stale — Workout editor pickers show stale results
 

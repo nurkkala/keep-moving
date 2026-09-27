@@ -795,6 +795,15 @@ export async function fetchKindTotals() {
   return Object.fromEntries((data ?? []).map((r) => [r.kind, r.total_sec]));
 }
 
+/** How many sessions exist in all, for pairing with the all-time totals. */
+export async function fetchSessionCount() {
+  const { count, error } = await supabase
+    .from("sessions")
+    .select("id", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /* ================================================================== equipment */
 
 /**

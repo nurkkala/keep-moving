@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import { ChevronLeft, TrendingUp } from "lucide-react";
 import {
-  fetchHistory, fetchKindTotals, fetchPerformanceHistory, fetchBests,
+  fetchHistory, fetchKindTotals, fetchSessionCount, fetchPerformanceHistory, fetchBests,
   clearHistory, describeTarget, describeOrderMode, formatDistance,
 } from "../lib/data";
 import KindBadge, { KINDS } from "./KindBadge";
@@ -17,6 +17,7 @@ const day = (ms) =>
 
 export default function History({ onBack }) {
   const [sessions, setSessions] = useState([]);
+  const [sessionCount, setSessionCount] = useState(0);
   const [totals, setTotals] = useState({});
   const [bests, setBests] = useState({});
   const [loading, setLoading] = useState(true);
@@ -26,11 +27,12 @@ export default function History({ onBack }) {
 
   const load = () => {
     setLoading(true);
-    Promise.all([fetchHistory(), fetchKindTotals(), fetchBests()])
-      .then(([s, t, b]) => {
+    Promise.all([fetchHistory(), fetchKindTotals(), fetchBests(), fetchSessionCount()])
+      .then(([s, t, b, n]) => {
         setSessions(s);
         setTotals(t);
         setBests(b);
+        setSessionCount(n);
       })
       .catch((e) => setError(e.message ?? "Couldn't load your history."))
       .finally(() => setLoading(false));
@@ -81,7 +83,7 @@ export default function History({ onBack }) {
               >
                 {Math.round(grand / 60)}{" "}
                 <span className="text-base font-normal text-muted">
-                  min across {sessions.length} sessions
+                  min across {sessionCount} {sessionCount === 1 ? "session" : "sessions"}
                 </span>
               </p>
               <KindBar byKind={totals} total={grand} />

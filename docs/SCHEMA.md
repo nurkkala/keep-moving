@@ -263,7 +263,7 @@ import {
   fetchTargets, setExerciseTarget, clearExerciseTarget,
   // sessions and history
   saveSession, fetchHistory, fetchPerformanceHistory, fetchBests,
-  deleteSession, clearHistory, fetchKindTotals,
+  deleteSession, clearHistory, fetchKindTotals, fetchSessionCount,
   // equipment
   fetchEquipment, setEquipmentOwned, fetchAvailability,
   fetchWorkoutEquipment, fetchAlternatives,
