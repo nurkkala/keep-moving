@@ -28,7 +28,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-7-self-hearing | [The coach may hear its own cues](#open-7-self-hearing--the-coach-may-hear-its-own-cues) | 💭 open |
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | ✅ done |
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | ✅ done |
-| TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
+| TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | ✅ done |
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | ✅ done |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | ✅ done |
@@ -44,7 +44,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | ✅ done |
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
-| TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | 🔨 queued |
+| TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | ✅ done |
 | OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | ✅ done |
 | OPEN-28-bundle-size | [Split the 520 kB bundle?](#open-28-bundle-size--split-the-520-kb-bundle) | 🚫 ruled no |
 
@@ -112,21 +112,6 @@ close it; production is unaffected, since StrictMode's double run is development
 
 ## Queue
 
-### TODO-10-atomic-saves — Exercise and workout saves can half-succeed
-
-*Added 2026-09-27 11:14:56.*
-
-`CLAUDE.md` routes multi-row writes through `security invoker` RPCs. Two saves do not:
-
-- `ExerciseEditor` updates the exercise, then replaces its tags with a delete followed by an
-  insert (`data.js` near line 156). A failed insert leaves the exercise with no tags. On
-  create, a failed tag write leaves the exercise saved without tags, and a retry makes a
-  duplicate.
-- `WorkoutEditor` calls `updateWorkout` and `saveWorkoutExercises` independently, so either
-  can succeed alone.
-
-Build: one RPC per save, in a migration, following `save_workout_exercises`.
-
 ### TODO-15-leaked-passwords — Turn on leaked-password protection
 
 *Added 2026-09-27 11:14:57.*
@@ -154,9 +139,30 @@ its own (released 2026-07-07; v3 installs the CLI from npm and dropped the `gith
 input, which this workflow never set). The Ubuntu 26 half stays open until a run after
 2026-10-19 has been checked.
 
+## Settled
+
+### TODO-10-atomic-saves — Exercise and workout saves can half-succeed
+
+*Added 2026-09-27 11:14:56 · done 2026-09-27 12:27:21.*
+
+`CLAUDE.md` routes multi-row writes through `security invoker` RPCs. Two saves did not:
+
+- `ExerciseEditor` updates the exercise, then replaces its tags with a delete followed by an
+  insert (`data.js` near line 156). A failed insert leaves the exercise with no tags. On
+  create, a failed tag write leaves the exercise saved without tags, and a retry makes a
+  duplicate.
+- `WorkoutEditor` calls `updateWorkout` and `saveWorkoutExercises` independently, so either
+  can succeed alone.
+
+Build: one RPC per save, in a migration, following `save_workout_exercises`.
+
+#### Built 2026-09-27
+
+Migration `20260927161936_save_exercise_and_workout_atomically` adds `save_exercise(id, fields, tag_ids)`, which creates or updates and replaces tags, and `save_workout(id, fields, items)`, which updates the workout and calls `save_workout_exercises`. `data.js` exposes them as `saveExercise` and `saveWorkout`; `createExercise`, `updateExercise`, `setExerciseTags`, `updateWorkout` and `saveWorkoutExercises` are gone. Dry-run on the live project in a rolled-back transaction as the owner: slots kept (13 to 13), tags created then cleared, a built-in exercise rejected. Applied the same day; `make db-check` reported 30 migrations agreeing.
+
 ### TODO-26-rls-perf — Row level security policies re-evaluate auth.uid() per row
 
-*Added 2026-09-27 11:14:59.*
+*Added 2026-09-27 11:14:59 · done 2026-09-27 12:27:21.*
 
 The Supabase performance advisor on 2026-09-27 reported:
 
@@ -170,7 +176,9 @@ None matters at one user's data volume. One migration covers all three; run
 `supabase db lint` and the advisors after it. The eleven "unused index" notices are an
 artifact of little traffic and should be left alone.
 
-## Settled
+#### Built 2026-09-27
+
+Migration `20260927162446_rls_initplan_and_fk_indexes` wraps `auth.uid()` in a scalar subquery in all 16 policies, replaces the four `FOR ALL` write policies with insert, update and delete policies, and adds the eight indexes. Every policy grants what it granted before; the dry run for TODO-10-atomic-saves ran under these policies. After applying, the performance advisor reported only unused-index notices, now 19 with the new indexes, which stay alone as planned.
 
 ### TODO-23-dead-code — Unused exports in data.js and speech.js
 
