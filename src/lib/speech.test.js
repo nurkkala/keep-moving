@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseCommand } from "./speech";
+import { parseCommand, tierOf, prettyVoice } from "./speech";
 
 const cases = [
   // control
@@ -36,5 +36,25 @@ const cases = [
 describe("parseCommand", () => {
   it.each(cases)("%s", (said, expected) => {
     expect(parseCommand(said)).toEqual(expected);
+  });
+});
+
+
+describe("voice labels", () => {
+  const voice = (name, extra = {}) => ({ name, lang: "en-US", localService: true, ...extra });
+
+  it("ranks neural and cloud voices above compact ones", () => {
+    expect(tierOf(voice("Samantha (Enhanced)"))).toBe("Best quality");
+    expect(tierOf(voice("Google US English", { localService: false }))).toBe("Best quality");
+    expect(tierOf(voice("Microsoft Aria"))).toBe("Good");
+    expect(tierOf(voice("Samantha (Compact)"))).toBe("Basic");
+  });
+
+  it("strips vendor prefixes and language suffixes", () => {
+    expect(prettyVoice(voice("Microsoft Aria Online (Natural) - English (United States)"))).toBe(
+      "Aria Online"
+    );
+    expect(prettyVoice(voice("Google UK English Female"))).toBe("UK English Female");
+    expect(prettyVoice({})).toBe("Voice");
   });
 });

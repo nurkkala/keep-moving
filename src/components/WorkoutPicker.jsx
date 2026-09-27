@@ -105,7 +105,7 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
               )}
               {onEquipment && (
                 <button onClick={onEquipment} className={NAV_LINK}>
-                  <Package size={13} /> Kit
+                  <Package size={13} /> Setup
                 </button>
               )}
               {onHistory && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, Check, Ruler } from "lucide-react";
+import { ChevronLeft, Check, Ruler, Volume2 } from "lucide-react";
 import { setDistanceUnit } from "../lib/distanceUnit";
+import VoicePicker from "./VoicePicker";
 import {
   fetchEquipment, setEquipmentOwned, fetchAvailability,
   fetchPrefs, savePrefs,
@@ -15,6 +16,7 @@ export default function EquipmentInventory({ onBack }) {
   const [items, setItems] = useState([]);
   const [availability, setAvailability] = useState({});
   const [unit, setUnit] = useState("mi");
+  const [voice, setVoice] = useState({ voiceURI: null, rate: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(null);
@@ -29,6 +31,7 @@ export default function EquipmentInventory({ onBack }) {
       setItems(equipment);
       setAvailability(avail);
       setUnit(prefs.distanceUnit);
+      setVoice({ voiceURI: prefs.voiceURI, rate: prefs.rate });
     } catch (e) {
       setError(e.message ?? "Couldn't load your equipment.");
     } finally {
@@ -88,7 +91,7 @@ export default function EquipmentInventory({ onBack }) {
           <ChevronLeft size={15} /> Today
         </button>
 
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Equipment</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Setup</h1>
         <p className="mt-2 text-sm text-muted leading-relaxed">
           What you have to hand. Exercises needing anything you don't own are flagged rather than
           hidden — you might borrow a band.
@@ -177,6 +180,14 @@ export default function EquipmentInventory({ onBack }) {
                 Distances are stored in meters either way, so switching this never changes what
                 your history says you did.
               </p>
+            </div>
+
+            <div className="mt-10">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-subtle">
+                <Volume2 size={11} className="inline mr-1.5 -mt-0.5" />
+                Coach voice
+              </p>
+              <VoicePicker initialVoiceURI={voice.voiceURI} initialRate={voice.rate} />
             </div>
           </>
         )}

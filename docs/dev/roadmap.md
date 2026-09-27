@@ -34,7 +34,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | ✅ done |
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | ✅ done |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
-| OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 🔨 queued |
+| OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | ✅ done |
 | OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 🔨 queued |
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
@@ -120,25 +120,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### OPEN-16-voice-prefs — Voice preferences are stored but cannot be set
-
-*Added 2026-09-27 11:14:57.*
-
-`preferences` stores `voice_uri`, `voice_name` and `rate`, and the session screen reads the
-URI and rate, but no screen writes them. `speech.js` carries `tierOf` and `prettyVoice`,
-the remains of a voice picker, and nothing calls either.
-
-Recommendation: build a small voice picker in the preferences sheet, since voices differ a
-great deal between devices and the coach is the app's main output. The alternative is to
-drop the three columns and the two helpers.
-
-#### Ruled yes, queued 2026-09-27: build the picker
-
-The owner chose a voice picker over dropping the columns. Build: a voice list and a speed
-control in the settings screen, with a sample line to hear the choice, writing
-`voice_uri`, `voice_name` and `rate` through `savePrefs`. `tierOf` and `prettyVoice` in
-`speech.js` are its starting point.
-
 ### OPEN-17-pace-display — Pace is computable and never shown
 
 *Added 2026-09-27 11:14:58.*
@@ -174,6 +155,29 @@ input, which this workflow never set). The Ubuntu 26 half stays open until a run
 2026-10-19 has been checked.
 
 ## Settled
+
+### OPEN-16-voice-prefs — Voice preferences are stored but cannot be set
+
+*Added 2026-09-27 11:14:57 · done 2026-09-27 12:36:05.*
+
+`preferences` stored `voice_uri`, `voice_name` and `rate`, and the session screen read the
+URI and rate, but no screen wrote them. `speech.js` carried `tierOf` and `prettyVoice`,
+the remains of a voice picker, and nothing called either.
+
+Recommendation: build a small voice picker in the preferences sheet, since voices differ a
+great deal between devices and the coach is the app's main output. The alternative is to
+drop the three columns and the two helpers.
+
+#### Ruled yes, queued 2026-09-27: build the picker
+
+The owner chose a voice picker over dropping the columns. Build: a voice list and a speed
+control in the settings screen, with a sample line to hear the choice, writing
+`voice_uri`, `voice_name` and `rate` through `savePrefs`. `tierOf` and `prettyVoice` in
+`speech.js` are its starting point.
+
+#### Built 2026-09-27
+
+`VoicePicker` sits on the setup screen (the nav link and heading, formerly "Kit" and "Equipment", now read "Setup") under the distance unit. It lists this device's English voices grouped by `tierOf`, with an Automatic choice that names the best one; a speed slider from 0.7× to 1.3× that saves once it comes to rest; and "Hear it", which speaks a sample cue with the current choice. Voices are per device, so a saved voice missing here falls back to automatic and the picker says so. Tests cover `tierOf` and `prettyVoice`; `verify-build` checks the picker ships. Nobody has heard it yet.
 
 ### OPEN-14-tests-lint — Is there a test suite and a linter?
 

@@ -25,6 +25,7 @@ const SENTINELS = [
   ["equipment", "What you have to hand"],
   ["exercise library", "whether or not it"],
   ["tag vocabulary", "rule slots match on"],
+  ["voice picker", "Squeeze at the top for a count"],
 ];
 
 let bundle = "";
