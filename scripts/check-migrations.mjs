@@ -49,7 +49,7 @@ for (const f of files) {
 // --- committed? ------------------------------------------------------------
 // `git ls-files` lists tracked paths; anything on disk but not listed is
 // uncommitted, which is the failure mode that bites a second machine.
-let tracked = new Set();
+let tracked;
 try {
   tracked = new Set(
     execFileSync("git", ["ls-files", DIR], { encoding: "utf8" })

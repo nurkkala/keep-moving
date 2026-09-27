@@ -22,7 +22,9 @@ fresh clone. `make help` lists every target. Override the port with
 | `make run` | Build for production, then serve that build |
 | `make build` | Production build + verify every screen shipped |
 | `make preview` | Serve an existing build without rebuilding |
-| `make check` | Build, migrations, and the roadmap — CI runs all but the roadmap |
+| `make check` | Lint, tests, build, migrations, and the roadmap — CI runs all but the roadmap |
+| `make test` | Unit tests (Vitest) |
+| `make lint` | ESLint |
 | `make todo` | What is queued and open on the roadmap |
 | `make clean` | Drop build output and Vite's cache |
 

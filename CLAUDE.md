@@ -166,6 +166,10 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 `npm run build` runs `vite build` then `scripts/verify-build.mjs`, which asserts
 each screen actually made it into the bundle.
 
+`make check` also runs ESLint and the Vitest unit tests, which sit beside the
+module they test (`src/lib/speech.test.js`). Pure logic in `src/lib/` gets a
+test; nothing mocks Supabase.
+
 That check exists because a Vite build **succeeds while producing a bundle with
 almost no application code**. `import.meta.env` is replaced at build time, so a
 module-scope `throw` on a missing env var becomes unconditional and Rollup

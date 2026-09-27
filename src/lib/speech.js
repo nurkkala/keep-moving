@@ -98,6 +98,7 @@ export function whenVoicesReady() {
 export function createSpeaker({ voiceURI, rate = 1, onSpeakingChange } = {}) {
   // Never read, on purpose: holding the utterance keeps Chrome from collecting
   // it mid-speech, which drops its `onend` and would leave recognition muted.
+  // eslint-disable-next-line no-unused-vars
   let current = null;
   let queued = 0;
 
@@ -194,8 +195,14 @@ export function parseCommand(transcript) {
   }
 
   /* ------------------------------------------------- a longer hold, by voice */
-  // "hold for another twenty" / "give me ten more seconds"
-  if (/\b(hold|keep|stay|another|more time|extend)\b/.test(t) && /\bsecond|\bmore\b/.test(t)) {
+  // "hold for another twenty" / "give me ten more seconds". Either naming
+  // seconds, or asking to hold for more, is a request for time. The first
+  // version needed both a hold word and "second" or "more", so neither of
+  // these two examples matched and both fell through to a rep adjustment.
+  const namesSeconds = /\bseconds?\b/.test(t);
+  const holdsLonger =
+    /\b(hold|stay|extend)\b/.test(t) && /\b(another|more|longer)\b/.test(t);
+  if (namesSeconds || holdsLonger) {
     const n = numberIn(t);
     if (n) return { type: "extend", seconds: n };
   }

@@ -15,7 +15,7 @@ ENV_FILE := .env.local
 # uv lockfile to pin it in; override if it lives elsewhere.
 ROADMAP ?= roadmap
 
-.PHONY: help install dev run build preview verify check migrations clean reset \
+.PHONY: help install dev run build preview verify check test lint migrations clean reset \
         db-check db-status db-push db-new db-lint \
         roadmap roadmap-check todo
 
@@ -62,8 +62,14 @@ build: node_modules $(ENV_FILE) ## Production build + verify every screen shippe
 verify: ## Re-run the bundle check against the current dist/
 	npm run verify
 
-check: build migrations roadmap-check ## Build, screens present, migrations sane, roadmap current
+check: lint test build migrations roadmap-check ## Lint, tests, build, migrations, roadmap
 	@echo "ok"
+
+test: node_modules ## Unit tests (Vitest)
+	npm test
+
+lint: node_modules ## ESLint, including the React hooks rules
+	npm run lint
 
 migrations: ## Migrations well-named and committed (no network)
 	@node scripts/check-migrations.mjs

@@ -32,7 +32,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | ✅ done |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | ✅ done |
-| OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 🔨 queued |
+| OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | ✅ done |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
 | OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 🔨 queued |
 | OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 🔨 queued |
@@ -47,6 +47,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | ✅ done |
 | OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | ✅ done |
 | OPEN-28-bundle-size | [Split the 520 kB bundle?](#open-28-bundle-size--split-the-520-kb-bundle) | 🚫 ruled no |
+| OPEN-29-compiler-lint | [Adopt the React Compiler lint rules?](#open-29-compiler-lint--adopt-the-react-compiler-lint-rules) | 💭 open |
 
 ## Open
 
@@ -85,26 +86,30 @@ The owner asked for the measurement before any ruling: read `seed_default_workou
 two concurrent calls for a user with no workouts inside a rolled-back transaction, and fix
 with a lock or a constraint only if it seeds twice.
 
+### OPEN-29-compiler-lint — Adopt the React Compiler lint rules?
+
+*Added 2026-09-27 12:33:58.*
+
+
+`eslint-plugin-react-hooks` 7 puts the React Compiler's rules in its recommended set. Run
+over the code on 2026-09-27 they reported 11 errors across 8 components:
+
+- `set-state-in-effect`, 8 times: an effect that starts with `setLoading(true)` or resets
+  state before fetching, the pattern every screen here loads data with.
+- `refs`, twice in `SessionScreen`: `commandRef.current = handleCommand` and
+  `elapsedRef.current = elapsed`, written during render so callbacks read the latest value.
+- `purity`, once: `useRef(Date.now())` in `SessionScreen`.
+
+OPEN-14-tests-lint enabled only the classic `rules-of-hooks` and `exhaustive-deps` (both
+errors, and clean). The question is whether to adopt the rest, which means reworking data
+loading (a small `useAsync` hook, or deriving loading state from the request) and the
+session screen's refs.
+
+Recommendation: not yet. Nothing here is broken by these patterns, and the app does not run
+the compiler, which is what the rules exist to protect. Reopen if the React Compiler is
+adopted, or if the loading pattern gets reworked for another reason.
+
 ## Queue
-
-### OPEN-14-tests-lint — Is there a test suite and a linter?
-
-*Added 2026-09-27 11:14:57.*
-
-`make check` builds, verifies the bundle, and checks migrations. Nothing tests behavior
-and nothing lints. The parser defect in TODO-2-stated-count was a pure function with a
-wrong table, the easiest kind of defect to pin in a unit test.
-
-Recommendation: add Vitest (it shares Vite's config) with tests for `parseCommand`, the
-distance conversions in `data.js`, and `describeTarget`, and ESLint with the React hooks
-rules, which would flag the stale-dependency class of bug in the session screen. Wire both
-into `make check` and CI. Out of scope: component or end-to-end tests against Supabase.
-
-#### Ruled yes, queued 2026-09-27: Vitest and ESLint
-
-The owner chose both, as recommended above: Vitest for `parseCommand`, the distance
-conversions and `describeTarget`, ESLint with the React hooks rules, and both wired into
-`make check` and CI. The fixes made on 2026-09-27 are the first things worth pinning.
 
 ### TODO-15-leaked-passwords — Turn on leaked-password protection
 
@@ -169,6 +174,31 @@ input, which this workflow never set). The Ubuntu 26 half stays open until a run
 2026-10-19 has been checked.
 
 ## Settled
+
+### OPEN-14-tests-lint — Is there a test suite and a linter?
+
+*Added 2026-09-27 11:14:57 · done 2026-09-27 12:34:13.*
+
+`make check` built, verified the bundle, and checked migrations. Nothing tested behavior
+and nothing linted. The parser defect in TODO-2-stated-count was a pure function with a
+wrong table, the easiest kind of defect to pin in a unit test.
+
+Recommendation: add Vitest (it shares Vite's config) with tests for `parseCommand`, the
+distance conversions in `data.js`, and `describeTarget`, and ESLint with the React hooks
+rules, which would flag the stale-dependency class of bug in the session screen. Wire both
+into `make check` and CI. Out of scope: component or end-to-end tests against Supabase.
+
+#### Ruled yes, queued 2026-09-27: Vitest and ESLint
+
+The owner chose both, as recommended above: Vitest for `parseCommand`, the distance
+conversions and `describeTarget`, ESLint with the React hooks rules, and both wired into
+`make check` and CI. The fixes made on 2026-09-27 are the first things worth pinning.
+
+#### Built 2026-09-27
+
+Vitest 5 and ESLint 10 are dev dependencies; `make test` and `make lint` run them, `make check` runs both first, and CI runs both in its build job. 31 tests cover `parseCommand`, the distance conversions, `describeTarget` and `describePace`. Writing them found four defects, fixed the same day: "hold for another twenty" and "give me ten more seconds", the two phrasings the session screen documents for extending a hold, parsed as rep adjustments, so a timed set ignored them; the spoken target said "1 miles"; and pace could print "8:60".
+
+ESLint enables the classic `rules-of-hooks` and `exhaustive-deps`, both clean. The plugin's newer React Compiler rules reported 11 errors and are left to OPEN-29-compiler-lint.
 
 ### TODO-10-atomic-saves — Exercise and workout saves can half-succeed
 

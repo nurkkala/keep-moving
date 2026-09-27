@@ -11,7 +11,7 @@ jobs:
   # import.meta.env at build time, and without any values the app compiles down
   # to just the setup screen — which verify-build would then correctly reject.
   build:
-    name: Build and check migrations
+    name: Lint, test, build, check migrations
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -22,6 +22,12 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
 
       - name: Migrations are well-named and committed
         run: node scripts/check-migrations.mjs

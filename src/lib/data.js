@@ -286,7 +286,8 @@ export function formatDistance(meters, unit = "mi", { long = false } = {}) {
   const rounded = value < 0.95 ? value.toFixed(2) : value.toFixed(1).replace(/\.0$/, "");
 
   if (!long) return `${rounded} ${unit}`;
-  return `${rounded} ${unit === "km" ? "kilometers" : "miles"}`;
+  const word = unit === "km" ? "kilometer" : "mile";
+  return `${rounded} ${rounded === "1" ? word : `${word}s`}`;
 }
 
 /** Turns a typed distance back into meters for storage. */
@@ -335,9 +336,10 @@ export function describeTarget(
 export function describePace(meters, seconds, unit = "mi") {
   if (!meters || !seconds) return "";
   const per = unit === "km" ? 1000 : METERS_PER_MILE;
-  const secsPerUnit = seconds / (meters / per);
-  const m = Math.floor(secsPerUnit / 60);
-  const sec = Math.round(secsPerUnit % 60);
+  // Round the whole first: rounding only the seconds turned 8:59.7 into 8:60.
+  const total = Math.round(seconds / (meters / per));
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
   return `${m}:${String(sec).padStart(2, "0")} / ${unit}`;
 }
 
