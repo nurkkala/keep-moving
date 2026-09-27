@@ -56,7 +56,14 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   const listenerRef = useRef(null);
   const speakingRef = useRef(false);
   const firedRef = useRef(new Set());
-  const startedAtRef = useRef(Date.now());
+  // The clock reads the wall time against an anchor: elapsed = now - anchor.
+  // Counting interval ticks instead ran slow whenever the browser throttled
+  // them, which it does to a dimmed screen or a background tab.
+  const anchorRef = useRef(Date.now());
+  const elapsedRef = useRef(0);
+  elapsedRef.current = elapsed;
+  // Time the session was actually running: not loading, paused, or finished.
+  const activeMsRef = useRef(0);
 
   const step = steps[idx] ?? null;
   const unit = useDistanceUnit();
@@ -119,12 +126,19 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
   useEffect(() => {
     if (paused || phase === "complete" || loading) return;
-    const id = setInterval(() => setElapsed((e) => e + 100), 100);
-    return () => clearInterval(id);
+    // Starting or resuming picks up where the clock stopped.
+    anchorRef.current = Date.now() - elapsedRef.current;
+    const since = Date.now();
+    const id = setInterval(() => setElapsed(Date.now() - anchorRef.current), 100);
+    return () => {
+      clearInterval(id);
+      activeMsRef.current += Date.now() - since;
+    };
   }, [paused, phase, loading]);
 
   const goPhase = useCallback((next) => {
     firedRef.current = new Set();
+    anchorRef.current = Date.now();
     setElapsed(0);
     setPhase(next);
   }, []);
@@ -135,7 +149,10 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     (how, actualOverride) => {
       if (!step) return;
 
-      const seconds = Math.round(elapsed / 1000);
+      // A timer that ends the set ended it at the target. The clock can overshoot
+      // when a throttled tick arrives late, and that lag is not work done.
+      const seconds =
+        how === "timer" ? step.targetValue : Math.round(elapsed / 1000);
       const skipped = how === "skipped";
 
       const entry = {
@@ -268,7 +285,9 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       // "Hold for another twenty" on a timed exercise buys more time by
       // rewinding the clock rather than restarting the set.
       if (cmd.type === "extend" && step?.targetType === "time" && phase === "work") {
-        setElapsed((e) => Math.max(0, e - cmd.seconds * 1000));
+        const rewound = Math.max(0, elapsedRef.current - cmd.seconds * 1000);
+        anchorRef.current = Date.now() - rewound;
+        setElapsed(rewound);
         firedRef.current.delete("c3");
         firedRef.current.delete("c2");
         firedRef.current.delete("c1");
@@ -331,7 +350,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     setSaveError(null);
     try {
       await saveSession({
-        totalSec: Math.round((Date.now() - startedAtRef.current) / 1000),
+        totalSec: Math.round(activeMsRef.current / 1000),
         items: log,
         workoutId: workout.id,
         orderMode: workout.orderMode,

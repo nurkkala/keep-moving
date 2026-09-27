@@ -26,7 +26,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-5-session-distance | [Distances are shown and entered in raw meters during a session](#todo-5-session-distance--distances-are-shown-and-entered-in-raw-meters-during-a-session) | ✅ done |
 | TODO-6-save-retry | [A failed save loses the whole session](#todo-6-save-retry--a-failed-save-loses-the-whole-session) | ✅ done |
 | OPEN-7-self-hearing | [The coach may hear its own cues](#open-7-self-hearing--the-coach-may-hear-its-own-cues) | 💭 open |
-| TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | 🔨 queued |
+| TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | ✅ done |
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | 🔨 queued |
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
@@ -111,19 +111,6 @@ before changing anything. A unique constraint or an advisory lock in the functio
 close it; production is unaffected, since StrictMode's double run is development-only.
 
 ## Queue
-
-### TODO-8-wall-clock — Session time drifts from the wall clock
-
-*Added 2026-09-27 11:14:56.*
-
-The session clock adds a fixed 100 ms per `setInterval` tick. Browsers throttle intervals
-in a background tab or under a locked screen to a second or longer, so a 45-second hold
-can run far longer when the phone dims. Separately, `totalSec` is measured from mount to
-the tap on Save, which counts load time, paused time, and however long the completion
-screen sat open.
-
-Build: derive `elapsed` from `Date.now()` against a phase start that pausing adjusts, and
-compute `totalSec` from the log (or from active time) at completion.
 
 ### TODO-9-target-sheet — The target sheet corrupts a target on a type switch and wipes its note
 
@@ -268,6 +255,23 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-8-wall-clock — Session time drifts from the wall clock
+
+*Added 2026-09-27 11:14:56 · done 2026-09-27 12:18:18.*
+
+The session clock added a fixed 100 ms per `setInterval` tick. Browsers throttle intervals
+in a background tab or under a locked screen to a second or longer, so a 45-second hold
+could run far longer when the phone dimmed. Separately, `totalSec` was measured from mount
+to the tap on Save, which counted load time, paused time, and however long the completion
+screen sat open.
+
+Build: derive `elapsed` from `Date.now()` against a phase start that pausing adjusts, and
+compute `totalSec` from the log (or from active time) at completion.
+
+#### Built 2026-09-27
+
+`elapsed` is now `Date.now()` minus an anchor that entering a phase resets, resuming re-derives, and "hold for another N" moves back. `totalSec` sums the spans the clock ran, so loading, pausing and the completion screen no longer count. A set the timer ends is logged at its target, since a late tick can overshoot it. Checked by `make build`; nobody has timed a set with the screen dimmed.
 
 ### TODO-6-save-retry — A failed save loses the whole session
 
