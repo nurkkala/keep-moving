@@ -3,7 +3,7 @@ import { useDistanceUnit } from "../lib/distanceUnit";
 import { ChevronLeft, TrendingUp } from "lucide-react";
 import {
   fetchHistory, fetchKindTotals, fetchSessionCount, fetchPerformanceHistory, fetchBests,
-  clearHistory, describeTarget, describeOrderMode, formatDistance,
+  clearHistory, describeTarget, describeOrderMode, formatDistance, describePace,
 } from "../lib/data";
 import KindBadge, { KINDS } from "./KindBadge";
 import { ConfirmDialog } from "./Dialog";
@@ -264,7 +264,9 @@ function ExerciseProgress({ detail, best, onBack }) {
                       {set.skipped
                         ? "skip"
                         : set.targetType === "distance"
-                        ? formatDistance(set.actualValue, unit)
+                        ? [formatDistance(set.actualValue, unit), describePace(set.actualValue, set.actualSec, unit)]
+                            .filter(Boolean)
+                            .join(" · ")
                         : `${set.actualValue}${set.targetType === "time" ? "s" : ""}`}
                     </span>
                   ))}

@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import {
   fetchWorkoutSequence, fetchPrefs, saveSession, describeTarget,
-  formatDistance, toMeters, fromMeters,
+  formatDistance, toMeters, fromMeters, describePace,
 } from "../lib/data";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import { KINDS } from "./KindBadge";
@@ -456,7 +456,12 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
                 {e.skipped
                   ? "skipped"
                   : e.targetType === "distance"
-                  ? `${formatDistance(e.actualValue, unit)} / ${formatDistance(e.targetValue, unit)}`
+                  ? [
+                      `${formatDistance(e.actualValue, unit)} / ${formatDistance(e.targetValue, unit)}`,
+                      describePace(e.actualValue, e.actualSec, unit),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
                   : `${e.actualValue}${e.targetType === "time" ? "s" : "×"} / ${e.targetValue}`}
               </span>
             </li>

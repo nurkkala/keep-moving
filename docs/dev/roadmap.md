@@ -35,7 +35,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | ✅ done |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
 | OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | ✅ done |
-| OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 🔨 queued |
+| OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | ✅ done |
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | ✅ done |
@@ -120,22 +120,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### OPEN-17-pace-display — Pace is computable and never shown
-
-*Added 2026-09-27 11:14:58.*
-
-`CLAUDE.md` says pace comes from `actual_sec` recorded beside distance, and `describePace`
-in `data.js` computes it. Nothing calls it, so pace is never shown.
-
-Recommendation: show it on distance rows in History and on the completion screen, in the
-user's unit, which `useDistanceUnit` now supplies (TODO-5-session-distance, done). Otherwise delete
-`describePace` with the rest of TODO-23-dead-code.
-
-#### Ruled yes, queued 2026-09-27: show it
-
-The owner chose to show pace: on distance sets in History and on the session's completion
-screen, in the user's unit, through `describePace`.
-
 ### TODO-25-ci-upkeep — CI actions and runner image need updating
 
 *Added 2026-09-27 11:14:59.*
@@ -155,6 +139,26 @@ input, which this workflow never set). The Ubuntu 26 half stays open until a run
 2026-10-19 has been checked.
 
 ## Settled
+
+### OPEN-17-pace-display — Pace is computable and never shown
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:36:29.*
+
+`CLAUDE.md` says pace comes from `actual_sec` recorded beside distance, and `describePace`
+in `data.js` computes it. Nothing called it, so pace was never shown.
+
+Recommendation: show it on distance rows in History and on the completion screen, in the
+user's unit, which `useDistanceUnit` now supplies (TODO-5-session-distance, done). Otherwise delete
+`describePace` with the rest of TODO-23-dead-code.
+
+#### Ruled yes, queued 2026-09-27: show it
+
+The owner chose to show pace: on distance sets in History and on the session's completion
+screen, in the user's unit, through `describePace`.
+
+#### Built 2026-09-27
+
+Distance sets show pace beside the distance, in the user's unit: on History's set chips ("3 mi · 8:12 / mi") and on the session's completion screen. OPEN-14-tests-lint had already fixed `describePace` printing "8:60" and gave it tests. A set with no recorded time shows the distance alone.
 
 ### OPEN-16-voice-prefs — Voice preferences are stored but cannot be set
 
