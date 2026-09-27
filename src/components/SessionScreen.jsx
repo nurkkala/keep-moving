@@ -45,6 +45,9 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   const [listening, setListening] = useState(false);
   const [log, setLog] = useState([]);
   const [saving, setSaving] = useState(false);
+  // Kept apart from `error`, which replaces the whole screen: a failed save must
+  // leave the log on screen so it can be tried again.
+  const [saveError, setSaveError] = useState(null);
 
   // For reps: what the user is about to log. Starts at target, adjustable.
   const [repCount, setRepCount] = useState(null);
@@ -325,6 +328,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
   const finish = useCallback(async () => {
     setSaving(true);
+    setSaveError(null);
     try {
       await saveSession({
         totalSec: Math.round((Date.now() - startedAtRef.current) / 1000),
@@ -334,7 +338,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       });
       onFinished?.();
     } catch (e) {
-      setError(e.message ?? "Couldn't save this session.");
+      setSaveError(e.message ?? "Couldn't save this session.");
       setSaving(false);
     }
   }, [log, workout, onFinished]);
@@ -409,6 +413,12 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
           ))}
         </ul>
 
+        {saveError && (
+          <p role="alert" className="mt-5 text-sm text-danger">
+            Couldn't save: {saveError.replace(/\.$/, "")}. Your sets are still here.
+          </p>
+        )}
+
         <button
           onClick={finish}
           disabled={saving}
@@ -416,7 +426,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
                      hover:bg-accent-hi disabled:opacity-50
                      focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-canvas"
         >
-          {saving ? "Saving…" : "Save session"}
+          {saving ? "Saving…" : saveError ? "Try again" : "Save session"}
         </button>
         <button onClick={onExit} className="mt-3 w-full text-xs text-subtle hover:text-ink-dim">
           Discard

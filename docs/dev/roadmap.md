@@ -24,7 +24,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-3-rest-voice | [Voice completion outside the work phase closes the upcoming set](#todo-3-rest-voice--voice-completion-outside-the-work-phase-closes-the-upcoming-set) | ✅ done |
 | TODO-4-ci-drift-auth | [The CI drift job fails behind a green run](#todo-4-ci-drift-auth--the-ci-drift-job-fails-behind-a-green-run) | ✅ done |
 | TODO-5-session-distance | [Distances are shown and entered in raw meters during a session](#todo-5-session-distance--distances-are-shown-and-entered-in-raw-meters-during-a-session) | ✅ done |
-| TODO-6-save-retry | [A failed save loses the whole session](#todo-6-save-retry--a-failed-save-loses-the-whole-session) | 🔨 queued |
+| TODO-6-save-retry | [A failed save loses the whole session](#todo-6-save-retry--a-failed-save-loses-the-whole-session) | ✅ done |
 | OPEN-7-self-hearing | [The coach may hear its own cues](#open-7-self-hearing--the-coach-may-hear-its-own-cues) | 💭 open |
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | 🔨 queued |
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | 🔨 queued |
@@ -111,18 +111,6 @@ before changing anything. A unique constraint or an advisory lock in the functio
 close it; production is unaffected, since StrictMode's double run is development-only.
 
 ## Queue
-
-### TODO-6-save-retry — A failed save loses the whole session
-
-*Added 2026-09-27 11:14:56.*
-
-When `saveSession` throws, `finish` sets `error`, and the error branch renders before the
-completion screen. Its only control is "Back", which calls `onExit`, and the session log
-lives in component state, so the workout just performed is gone.
-
-Build: show the save error on the completion screen with a retry, keeping the log. A copy
-in `localStorage` until the save succeeds would also survive a reload. Build that part only
-if a failed save is ever seen in use.
 
 ### TODO-8-wall-clock — Session time drifts from the wall clock
 
@@ -280,6 +268,22 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-6-save-retry — A failed save loses the whole session
+
+*Added 2026-09-27 11:14:56 · done 2026-09-27 12:17:31.*
+
+When `saveSession` threw, `finish` set `error`, and the error branch rendered before the
+completion screen. Its only control was "Back", which calls `onExit`, and the session log
+lives in component state, so the workout just performed was gone.
+
+Build: show the save error on the completion screen with a retry, keeping the log. A copy
+in `localStorage` until the save succeeds would also survive a reload. Build that part only
+if a failed save is ever seen in use.
+
+#### Built 2026-09-27
+
+A failed save now sets `saveError`, kept apart from `error`, so the completion screen stays up with the log, says the save failed, and relabels the button "Try again". The `localStorage` copy was not built.
 
 ### OPEN-11-rest-pref — Should preferences.rest_sec drive the rest timer?
 
