@@ -398,6 +398,8 @@ function ExercisePicker({ exclude, onPick, onClose }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchError, setSearchError] = useState(null);
+  // Bumped to refetch with unchanged filters, after creating an exercise.
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     fetchAttributeTypes().then(setAxes).catch(() => {});
@@ -422,7 +424,7 @@ function ExercisePicker({ exclude, onPick, onClose }) {
       canceled = true;
       clearTimeout(timer);
     };
-  }, [search, active]);
+  }, [search, active, refresh]);
 
   const toggle = (key) =>
     setActive((a) => (a.includes(key) ? a.filter((k) => k !== key) : [...a, key]));
@@ -438,6 +440,9 @@ function ExercisePicker({ exclude, onPick, onClose }) {
           setCreating(false);
           setSearch("");
           setActive([]);
+          // Clearing filters that were already clear changes nothing, and the
+          // new exercise stayed missing until something else changed.
+          setRefresh((n) => n + 1);
         }}
       />
     );
@@ -571,8 +576,10 @@ function RuleBuilder({ onAdd, onClose }) {
   // silently contributes nothing to a workout, which is worth seeing now.
   useEffect(() => {
     if (!picked.length) return setMatches(null);
+    let canceled = false;
     fetchExercises({ valueKeys: picked.map((p) => p.key) })
       .then((rows) => {
+        if (canceled) return; // a newer pick is already counting
         const keys = picked.map((p) => p.key);
         setMatches(
           rows.filter((ex) =>
@@ -582,7 +589,10 @@ function RuleBuilder({ onAdd, onClose }) {
           ).length
         );
       })
-      .catch(() => setMatches(null));
+      .catch(() => !canceled && setMatches(null));
+    return () => {
+      canceled = true;
+    };
   }, [picked]);
 
   const toggle = (v) =>

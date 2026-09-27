@@ -37,7 +37,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 💭 open |
 | OPEN-17-pace-display | [Pace is computable and never shown](#open-17-pace-display--pace-is-computable-and-never-shown) | 💭 open |
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | ✅ done |
-| TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | 🔨 queued |
+| TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | ✅ done |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | 🔨 queued |
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | 🔨 queued |
@@ -136,18 +136,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### TODO-19-editor-stale — Workout editor pickers show stale results
-
-*Added 2026-09-27 11:14:58.*
-
-Two stale-result defects in `WorkoutEditor.jsx`:
-
-- After "Create your own exercise", the code calls `setSearch("")` and `setActive([])`.
-  When both are already empty the state does not change, the fetch effect does not rerun,
-  and the new exercise is missing from the picker. Refetch explicitly.
-- The rule builder's match-count effect has no cancellation, so a slow response can
-  overwrite a newer count. Unverified.
-
 ### TODO-20-history-stat — The history summary divides all-time minutes by at most 40 sessions
 
 *Added 2026-09-27 11:14:58.*
@@ -207,6 +195,22 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-19-editor-stale — Workout editor pickers show stale results
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:22:32.*
+
+Two stale-result defects in `WorkoutEditor.jsx`, as found:
+
+- After "Create your own exercise", the code calls `setSearch("")` and `setActive([])`.
+  When both are already empty the state does not change, the fetch effect does not rerun,
+  and the new exercise is missing from the picker. Refetch explicitly.
+- The rule builder's match-count effect has no cancellation, so a slow response can
+  overwrite a newer count. Unverified.
+
+#### Built 2026-09-27
+
+The picker's search effect also depends on a `refresh` counter, which saving a new exercise bumps. The rule builder's match-count effect cancels on cleanup, so only the latest pick sets the count. Neither was reproduced before the fix; both were traced in the code.
 
 ### TODO-18-a11y-labels — Accessible names read undefined or wrong
 
