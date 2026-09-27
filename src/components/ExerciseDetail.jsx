@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import { X, Play, ExternalLink, Pencil, AlertTriangle } from "lucide-react";
 import { fetchExercise, describeTarget, fetchAvailability, fetchAlternatives } from "../lib/data";
 import KindBadge, { KINDS } from "./KindBadge";
@@ -37,6 +38,7 @@ function embedUrl(raw) {
  *   <ExerciseDetail exerciseId={id} onClose={…} onEdit={…} />
  */
 export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }) {
+  const unit = useDistanceUnit();
   const [data, setData] = useState(exercise ?? null);
   const [loading, setLoading] = useState(!exercise);
   const [error, setError] = useState(null);
@@ -136,7 +138,7 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
                     targetValue: data.suggestedValue,
                     sets: data.suggestedSets,
                   },
-                  { long: true }
+                  { long: true, unit }
                 )}
                 <span className="text-faint"> suggested</span>
                 {data.builtIn && <span className="text-faint"> · shared</span>}

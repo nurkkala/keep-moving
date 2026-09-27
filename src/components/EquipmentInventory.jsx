@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Check, Ruler } from "lucide-react";
+import { setDistanceUnit } from "../lib/distanceUnit";
 import {
   fetchEquipment, setEquipmentOwned, fetchAvailability,
   fetchPrefs, savePrefs,
@@ -60,6 +61,7 @@ export default function EquipmentInventory({ onBack }) {
 
   const changeUnit = async (next) => {
     setUnit(next);
+    setDistanceUnit(next);
     try {
       await savePrefs({ distanceUnit: next });
     } catch {

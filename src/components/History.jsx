@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import { ChevronLeft, TrendingUp } from "lucide-react";
 import {
   fetchHistory, fetchKindTotals, fetchPerformanceHistory, fetchBests,
-  clearHistory, describeTarget, describeOrderMode,
+  clearHistory, describeTarget, describeOrderMode, formatDistance,
 } from "../lib/data";
 import KindBadge, { KINDS } from "./KindBadge";
 import { ConfirmDialog } from "./Dialog";
@@ -175,6 +176,7 @@ export default function History({ onBack }) {
 
 /** Set-by-set history for one exercise, newest first. */
 function ExerciseProgress({ detail, best, onBack }) {
+  const unit = useDistanceUnit();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -210,7 +212,7 @@ function ExerciseProgress({ detail, best, onBack }) {
             <TrendingUp size={14} className="text-accent-hi" />
             Best set{" "}
             <span style={{ fontVariantNumeric: "tabular-nums" }}>
-              {describeTarget({ targetType: best.targetType, targetValue: best.bestSet })}
+              {describeTarget({ targetType: best.targetType, targetValue: best.bestSet }, { unit })}
             </span>
             <span className="text-faint">· {best.timesPerformed} sessions</span>
           </p>
@@ -238,7 +240,7 @@ function ExerciseProgress({ detail, best, onBack }) {
                       title={
                         set.skipped
                           ? "Skipped"
-                          : `Set ${set.setNumber} · target ${set.targetValue}`
+                          : `Set ${set.setNumber} · target ${describeTarget(set, { unit })}`
                       }
                       className={`text-xs border rounded-sm px-2 py-0.5
                                   ${set.skipped
@@ -250,6 +252,8 @@ function ExerciseProgress({ detail, best, onBack }) {
                     >
                       {set.skipped
                         ? "skip"
+                        : set.targetType === "distance"
+                        ? formatDistance(set.actualValue, unit)
                         : `${set.actualValue}${set.targetType === "time" ? "s" : ""}`}
                     </span>
                   ))}
@@ -262,7 +266,7 @@ function ExerciseProgress({ detail, best, onBack }) {
                     targetType: s.sets[0].targetType,
                     targetValue: s.sets[0].targetValue,
                     sets: s.sets[0].targetSets,
-                  })}
+                  }, { unit })}
                 </p>
               </li>
             ))}

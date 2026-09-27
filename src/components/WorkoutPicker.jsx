@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import {
   ChevronLeft, Calendar, Repeat, AlertCircle, Pencil, Plus, Clock3,
   AlertTriangle, Package, Library,
@@ -236,6 +237,7 @@ function WorkoutCard({ workout, highlight, onOpen, kit = [] }) {
 }
 
 function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
+  const unit = useDistanceUnit();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailId, setDetailId] = useState(null);
@@ -322,7 +324,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
                                 : "text-faint italic border-line"}`}
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
-                  {describeTarget(ex)}
+                  {describeTarget(ex, { unit })}
                 </button>
               </li>
             ))}

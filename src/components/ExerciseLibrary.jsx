@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import { ChevronLeft, Search, Plus, AlertTriangle, Tags } from "lucide-react";
 import { fetchExercises, fetchAvailability, describeTarget } from "../lib/data";
 import KindBadge from "./KindBadge";
@@ -25,6 +26,7 @@ const FILTERS = [
  * do right now is a filter rather than a drill-down.
  */
 export default function ExerciseLibrary({ onBack, onTags }) {
+  const unit = useDistanceUnit();
   const [all, setAll] = useState([]);
   const [availability, setAvailability] = useState({});
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export default function ExerciseLibrary({ onBack, onTags }) {
                           targetType: ex.suggestedType,
                           targetValue: ex.suggestedValue,
                           sets: ex.suggestedSets,
-                        })}
+                        }, { unit })}
                       </span>
                     </button>
                   </li>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import {
   ChevronLeft, ChevronUp, ChevronDown, Trash2, Plus, Search, X, Shuffle,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const DAYS = [
 ];
 
 export default function WorkoutEditor({ workout, onBack, onChanged }) {
+  const unit = useDistanceUnit();
   const [name, setName] = useState(workout.name);
   const [days, setDays] = useState(workout.days ?? []);
   const [orderMode, setOrderMode] = useState(workout.orderMode ?? "straight");
@@ -319,7 +321,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
                   }`}
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
-                  {ex.isRule ? "chosen each session" : describeTarget(ex)}
+                  {ex.isRule ? "chosen each session" : describeTarget(ex, { unit })}
                 </span>
 
                 <button
@@ -376,6 +378,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
 
 /** Browse the shared library, filtered by the tag vocabulary. */
 function ExercisePicker({ exclude, onPick, onClose }) {
+  const unit = useDistanceUnit();
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
   const [axes, setAxes] = useState([]);
@@ -520,7 +523,7 @@ function ExercisePicker({ exclude, onPick, onClose }) {
                             targetType: ex.suggestedType,
                             targetValue: ex.suggestedValue,
                             sets: ex.suggestedSets,
-                          })}
+                          }, { unit })}
                     </span>
                   </button>
                 </li>

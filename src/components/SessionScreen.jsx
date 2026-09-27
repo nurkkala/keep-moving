@@ -4,17 +4,33 @@ import {
 } from "lucide-react";
 import {
   fetchWorkoutSequence, fetchPrefs, saveSession, describeTarget,
+  formatDistance, toMetres, fromMetres,
 } from "../lib/data";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import { KINDS } from "./KindBadge";
 import {
   createSpeaker, createListener, whenVoicesReady, RECOGNITION_SUPPORTED,
 } from "../lib/speech";
 
 /** "Plank, 45 seconds" / "Push ups, 10 reps, set 2 of 3" */
-function announce(step) {
-  const target = describeTarget(step, { long: true });
+function announce(step, unit) {
+  const target = describeTarget(step, { long: true, unit });
   const setPart = step.totalSets > 1 ? `, set ${step.setNumber} of ${step.totalSets}` : "";
   return `${step.name}, ${target}${setPart}`;
+}
+
+/*
+ * A distance is spoken and stepped in the user's unit and held in meters, the
+ * stored unit. Reps pass through both of these unchanged.
+ */
+function toStored(step, n, unit) {
+  return step.targetType === "distance" ? toMetres(n, unit) : n;
+}
+
+function spokenCount(step, value, unit) {
+  return step.targetType === "distance"
+    ? formatDistance(value, unit, { long: true })
+    : String(value);
 }
 
 export default function SessionScreen({ workout, onExit, onFinished }) {
@@ -40,6 +56,9 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   const startedAtRef = useRef(Date.now());
 
   const step = steps[idx] ?? null;
+  const unit = useDistanceUnit();
+  // What one tap of the steppers is worth, in the user's unit.
+  const stepBy = step?.targetType === "distance" ? 0.1 : 1;
   const restSec = workout?.restSec ?? 15;
 
   /* ------------------------------------------------------------ load + voice */
@@ -183,7 +202,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
     if (phase === "ready") {
       const target = 5000;
-      fire("start", () => speak(`Get ready. First up, ${announce(step)}.`, true));
+      fire("start", () => speak(`Get ready. First up, ${announce(step, unit)}.`, true));
       countdown(target - elapsed);
       if (elapsed >= target) {
         speak("Begin.", true);
@@ -194,7 +213,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
     if (phase === "rest") {
       const target = restSec * 1000;
-      fire("start", () => speak(`Rest. Next, ${announce(step)}.`, true));
+      fire("start", () => speak(`Rest. Next, ${announce(step, unit)}.`, true));
       countdown(target - elapsed);
       if (elapsed >= target) {
         speak("Begin.", true);
@@ -206,7 +225,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     // work
     fire("start", () => {
       const tail = step.targetType === "reps" ? " Say done when you finish." : "";
-      speak(`${announce(step)}. ${step.cue || ""}${tail}`, true);
+      speak(`${announce(step, unit)}. ${step.cue || ""}${tail}`, true);
       if (step.targetType === "reps") setRepCount(step.targetValue);
     });
 
@@ -222,7 +241,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     } else if (elapsed > 90000) {
       fire("check", () => speak("Still going? Say done when you finish."));
     }
-  }, [phase, elapsed, step, paused, loading, restSec, speak, goPhase, closeOut]);
+  }, [phase, elapsed, step, paused, loading, restSec, unit, speak, goPhase, closeOut]);
 
   /* --------------------------------------------------------------- listening */
 
@@ -240,7 +259,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       }
       if (paused) return;
 
-      if (cmd.type === "repeat" && step) return speak(announce(step), true);
+      if (cmd.type === "repeat" && step) return speak(announce(step, unit), true);
       if (cmd.type === "skip") return closeOut("skipped");
 
       // "Hold for another twenty" on a timed exercise buys more time by
@@ -256,7 +275,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
 
       if (cmd.type === "done") {
         if (phase !== "work") return startNow();
-        return closeOut("voice", cmd.value ?? repCount);
+        return closeOut("voice", cmd.value != null ? toStored(step, cmd.value, unit) : repCount);
       }
 
       if ((step?.targetType !== "reps" && step?.targetType !== "distance") || phase !== "work")
@@ -265,18 +284,19 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       // "two more" / "three fewer" adjust; a bare number sets it outright.
       if (cmd.type === "adjust") {
         setRepCount((c) => {
-          const next = Math.max(0, (c ?? step.targetValue) + cmd.delta);
-          speak(`${next}.`);
+          const next = Math.max(0, (c ?? step.targetValue) + toStored(step, cmd.delta, unit));
+          speak(`${spokenCount(step, next, unit)}.`);
           return next;
         });
         return;
       }
       if (cmd.type === "count") {
-        setRepCount(cmd.value);
-        speak(`${cmd.value}.`);
+        const next = toStored(step, cmd.value, unit);
+        setRepCount(next);
+        speak(`${spokenCount(step, next, unit)}.`);
       }
     },
-    [paused, step, phase, repCount, closeOut, startNow, speak]
+    [paused, step, phase, repCount, unit, closeOut, startNow, speak]
   );
 
   const commandRef = useRef(handleCommand);
@@ -381,6 +401,8 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
               >
                 {e.skipped
                   ? "skipped"
+                  : e.targetType === "distance"
+                  ? `${formatDistance(e.actualValue, unit)} / ${formatDistance(e.targetValue, unit)}`
                   : `${e.actualValue}${e.targetType === "time" ? "s" : "×"} / ${e.targetValue}`}
               </span>
             </li>
@@ -449,7 +471,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         {phase === "rest" ? `Next: ${step.name}` : step.name}
       </h1>
       <p className="mt-1 text-center text-muted" style={{ fontVariantNumeric: "tabular-nums" }}>
-        {describeTarget(step, { long: true })}
+        {describeTarget(step, { long: true, unit })}
         {step.totalSets > 1 && (
           <span className="text-faint">
             {" "}
@@ -469,10 +491,10 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
           <button
             onClick={() =>
               setRepCount((c) =>
-                Math.max(0, (c ?? step.targetValue) - (step.targetType === "distance" ? 100 : 1))
+                Math.max(0, (c ?? step.targetValue) - toStored(step, stepBy, unit))
               )
             }
-            aria-label="One fewer rep"
+            aria-label={step.targetType === "distance" ? `${stepBy} ${unit} less` : "One fewer rep"}
             className="w-20 h-20 border-2 border-line-hi rounded-sm grid place-items-center
                        text-ink-dim active:bg-surface-hi hover:border-line-hi3
                        focus:outline-none focus:ring-2 focus:ring-accent"
@@ -484,17 +506,19 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
               className="text-5xl font-semibold"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
-              {repCount ?? step.targetValue}
+              {step.targetType === "distance"
+                ? fromMetres(repCount ?? step.targetValue, unit)
+                : repCount ?? step.targetValue}
             </span>
             <span className="block mt-1 text-[11px] uppercase tracking-[0.2em] text-subtle">
-              {step.targetType === "distance" ? "metres" : "reps done"}
+              {step.targetType === "distance" ? (unit === "km" ? "kilometers" : "miles") : "reps done"}
             </span>
           </div>
           <button
             onClick={() =>
-              setRepCount((c) => (c ?? step.targetValue) + (step.targetType === "distance" ? 100 : 1))
+              setRepCount((c) => (c ?? step.targetValue) + toStored(step, stepBy, unit))
             }
-            aria-label="One more rep"
+            aria-label={step.targetType === "distance" ? `${stepBy} ${unit} more` : "One more rep"}
             className="w-20 h-20 border-2 border-line-hi rounded-sm grid place-items-center
                        text-ink-dim active:bg-surface-hi hover:border-line-hi3
                        focus:outline-none focus:ring-2 focus:ring-accent"

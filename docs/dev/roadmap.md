@@ -23,7 +23,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-2-stated-count | [A stated final count is read as a shortfall](#todo-2-stated-count--a-stated-final-count-is-read-as-a-shortfall) | ✅ done |
 | TODO-3-rest-voice | [Voice completion outside the work phase closes the upcoming set](#todo-3-rest-voice--voice-completion-outside-the-work-phase-closes-the-upcoming-set) | ✅ done |
 | TODO-4-ci-drift-auth | [The CI drift job fails behind a green run](#todo-4-ci-drift-auth--the-ci-drift-job-fails-behind-a-green-run) | ✅ done |
-| TODO-5-session-distance | [Distances are shown and entered in raw meters during a session](#todo-5-session-distance--distances-are-shown-and-entered-in-raw-meters-during-a-session) | 🔨 queued |
+| TODO-5-session-distance | [Distances are shown and entered in raw meters during a session](#todo-5-session-distance--distances-are-shown-and-entered-in-raw-meters-during-a-session) | ✅ done |
 | TODO-6-save-retry | [A failed save loses the whole session](#todo-6-save-retry--a-failed-save-loses-the-whole-session) | 🔨 queued |
 | OPEN-7-self-hearing | [The coach may hear its own cues](#open-7-self-hearing--the-coach-may-hear-its-own-cues) | 💭 open |
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | 🔨 queued |
@@ -158,21 +158,6 @@ Recommendation: leave it. The app is used on a device that loads it once and kee
 to be taught. Reopen if first load is ever noticeably slow on a phone.
 
 ## Queue
-
-### TODO-5-session-distance — Distances are shown and entered in raw meters during a session
-
-*Added 2026-09-27 11:14:56.*
-
-`preferences.distance_unit` decides miles or kilometers, and `CLAUDE.md` makes it a
-display concern over values stored in meters. Only `TargetSheet` reads it. The session
-screen labels a distance set "metres", steps it by 100, calls `describeTarget` with no unit,
-and labels its steppers "rep". Saying "done, 3" on a three-mile run logs 3 meters. The
-workout picker, editor, and History fall back to `"mi"` regardless of the preference.
-
-Build: read the preference once where a session starts, pass the unit through, convert
-spoken and stepped values with `toMetres`/`fromMetres`, and step by a sensible increment in
-the user's unit. Unverified beyond `SessionScreen.jsx`: the review traced the picker,
-editor and History defaults but nobody has run them.
 
 ### TODO-6-save-retry — A failed save loses the whole session
 
@@ -342,6 +327,33 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-5-session-distance — Distances are shown and entered in raw meters during a session
+
+*Added 2026-09-27 11:14:56 · done 2026-09-27 11:35:32.*
+
+`preferences.distance_unit` decides miles or kilometers, and `CLAUDE.md` makes it a
+display concern over values stored in meters. Until 2026-09-27 only `TargetSheet` read
+it. The session screen labeled a distance set "metres", stepped it by 100, called
+`describeTarget` with no unit, and labeled its steppers "rep". Saying "done, 3" on a
+three-mile run logged 3 meters. The workout picker, editor, and History fell back to
+`"mi"` regardless of the preference.
+
+Build: read the preference once where a session starts, pass the unit through, convert
+spoken and stepped values with `toMetres`/`fromMetres`, and step by a sensible increment in
+the user's unit. Unverified beyond `SessionScreen.jsx`: the review traced the picker,
+editor and History defaults but nobody has run them.
+
+#### Built 2026-09-27
+
+`src/lib/distanceUnit.js` holds the unit once for every screen (`useDistanceUnit`), and
+the equipment screen updates it when the preference changes, so open screens follow. The
+session screen announces, shows and accepts distances in the user's unit, steps by 0.1 of
+it, and converts spoken numbers to meters before logging. History's set chips format
+distance too. Checked by `make check`; nobody has run a distance set since.
+
+Left as is: spoken numbers are whole (no "3.1"), and "a few more" with no number moves a
+distance by one whole unit.
 
 ### TODO-4-ci-drift-auth — The CI drift job fails behind a green run
 

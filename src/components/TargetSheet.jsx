@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { X, RotateCcw } from "lucide-react";
+import { useDistanceUnit } from "../lib/distanceUnit";
 import {
   setExerciseTarget, clearExerciseTarget, describeTarget,
-  fetchPrefs, toMetres, fromMetres,
+  toMetres, fromMetres,
 } from "../lib/data";
 
 /**
@@ -15,11 +16,7 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
   const [targetValue, setTargetValue] = useState(exercise.targetValue ?? 30);
   const [sets, setSets] = useState(exercise.sets ?? 1);
   const [note, setNote] = useState("");
-  const [unit, setUnit] = useState("mi");
-
-  useEffect(() => {
-    fetchPrefs().then((p) => setUnit(p.distanceUnit)).catch(() => {});
-  }, []);
+  const unit = useDistanceUnit();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
