@@ -1,7 +1,7 @@
 ---
 label: OPEN-21-us-spelling
 title: "Should metres become meters in copy and identifiers?"
-state: open
+state: queued
 added: 2026-09-27 11:14:58
 priority: 5
 ---
@@ -17,3 +17,9 @@ US spelling everywhere.
 Recommendation: change it all in one commit, identifiers included, since every caller is in
 `src/`. The database has no column spelled either way. Left open because `CLAUDE.md` states
 the convention in the British spelling, and that file is the owner's.
+
+#### Ruled yes, queued 2026-09-27: all of it, in one commit
+
+The owner chose the full conversion: UI copy, identifiers, comments, `CLAUDE.md` and
+`docs/SCHEMA.md`. Exempt: migration files already applied, which cannot change, and
+quotations of the old spelling where a document records what the code once said.

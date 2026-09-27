@@ -29,7 +29,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-8-wall-clock | [Session time drifts from the wall clock](#todo-8-wall-clock--session-time-drifts-from-the-wall-clock) | 🔨 queued |
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | 🔨 queued |
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
-| OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | 💭 open |
+| OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | 🔨 queued |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | 🔨 queued |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | 🔨 queued |
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 💭 open |
@@ -39,14 +39,14 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | 🔨 queued |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | 🔨 queued |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | 🔨 queued |
-| OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | 💭 open |
+| OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | 🔨 queued |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | 🔨 queued |
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | 🔨 queued |
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
 | TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | 🔨 queued |
-| OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | 💭 open |
-| OPEN-28-bundle-size | [Split the 520 kB bundle?](#open-28-bundle-size--split-the-520-kb-bundle) | 💭 open |
+| OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | 🔨 queued |
+| OPEN-28-bundle-size | [Split the 520 kB bundle?](#open-28-bundle-size--split-the-520-kb-bundle) | 🚫 ruled no |
 
 ## Open
 
@@ -63,18 +63,6 @@ Unverified: this was inferred from reading `speech.js`. Settle it first by runni
 in Chrome with the speaker audible to the microphone and logging what the listener hears.
 If it reproduces, the likely fix is to keep the mute on for a short tail after `onend`, or to
 drop results whose timestamps overlap speech.
-
-### OPEN-11-rest-pref — Should preferences.rest_sec drive the rest timer?
-
-*Added 2026-09-27 11:14:57.*
-
-`preferences.rest_sec` is read by `fetchPrefs` and writable through `savePrefs`, but
-nothing uses it: rest length comes from `workouts.rest_sec`, falling back to 15.
-`CLAUDE.md` asks that a stored value the app does not honor be removed.
-
-Recommendation: drop the column. Rest length belongs to a workout, where it is already set
-and honored. Keep it only if a per-user default for new workouts is wanted, in which case
-`WorkoutPicker`'s hard-coded 15 for a new workout should read it.
 
 ### OPEN-14-tests-lint — Is there a test suite and a linter?
 
@@ -112,20 +100,6 @@ Recommendation: show it on distance rows in History and on the completion screen
 user's unit, which `useDistanceUnit` now supplies (TODO-5-session-distance, done). Otherwise delete
 `describePace` with the rest of TODO-23-dead-code.
 
-### OPEN-21-us-spelling — Should metres become meters in copy and identifiers?
-
-*Added 2026-09-27 11:14:58.*
-
-The project writes "metres" and "kilometres" in UI copy (`EquipmentInventory`,
-`ExerciseEditor`, `SessionScreen`), in identifiers (`toMetres`, `fromMetres`,
-`METRES_PER_MILE`), and in `CLAUDE.md` and `docs/SCHEMA.md`. The UI also says "Colour
-theme", and comments say "colour", "centred" and "favouring". The owner's standing rule is
-US spelling everywhere.
-
-Recommendation: change it all in one commit, identifiers included, since every caller is in
-`src/`. The database has no column spelled either way. Left open because `CLAUDE.md` states
-the convention in the British spelling, and that file is the owner's.
-
 ### OPEN-24-double-seed — The default workout may seed twice in development
 
 *Added 2026-09-27 11:14:59.*
@@ -135,27 +109,6 @@ twice concurrently. If `seed_default_workout` checks for existing workouts witho
 or a unique constraint, both calls can seed. Unverified: reproduce against a fresh user
 before changing anything. A unique constraint or an advisory lock in the function would
 close it; production is unaffected, since StrictMode's double run is development-only.
-
-### OPEN-27-db-types — Keep or drop the db:types script
-
-*Added 2026-09-27 11:14:59.*
-
-`npm run db:types` (and `make db-types`) writes `src/lib/database.types.ts` into a
-JavaScript project. The file is not committed and nothing imports it.
-
-Recommendation: remove the script and target. Adopt them only alongside a move to
-TypeScript or JSDoc type checking, which would be its own decision.
-
-### OPEN-28-bundle-size — Split the 520 kB bundle?
-
-*Added 2026-09-27 11:14:59.*
-
-The production bundle is one 520 kB chunk (143 kB gzipped), over Vite's warning threshold.
-Splitting the editors and History behind `React.lazy` would shrink the first load.
-
-Recommendation: leave it. The app is used on a device that loads it once and keeps it, and
-`verify-build.mjs` asserts every screen is in the bundle, a check that splitting would have
-to be taught. Reopen if first load is ever noticeably slow on a phone.
 
 ## Queue
 
@@ -212,6 +165,24 @@ Two defects in `TargetSheet.jsx`:
   can succeed alone.
 
 Build: one RPC per save, in a migration, following `save_workout_exercises`.
+
+### OPEN-11-rest-pref — Should preferences.rest_sec drive the rest timer?
+
+*Added 2026-09-27 11:14:57.*
+
+`preferences.rest_sec` is read by `fetchPrefs` and writable through `savePrefs`, but
+nothing uses it: rest length comes from `workouts.rest_sec`, falling back to 15.
+`CLAUDE.md` asks that a stored value the app does not honor be removed.
+
+Recommendation: drop the column. Rest length belongs to a workout, where it is already set
+and honored. Keep it only if a per-user default for new workouts is wanted, in which case
+`WorkoutPicker`'s hard-coded 15 for a new workout should read it.
+
+#### Ruled yes, queued 2026-09-27: drop the column
+
+The owner chose to drop it. Build: a migration removing `preferences.rest_sec`, and the
+field removed from `fetchPrefs`, `savePrefs` and the defaults in `data.js`. Rest stays a
+property of each workout.
 
 ### TODO-12-silent-errors — Failed loads render as empty states
 
@@ -277,6 +248,26 @@ The History header reads "N min across M sessions". `N` is all-time minutes from
 sessions the line pairs two different populations. Count sessions in the same query as the
 totals.
 
+### OPEN-21-us-spelling — Should metres become meters in copy and identifiers?
+
+*Added 2026-09-27 11:14:58.*
+
+The project writes "metres" and "kilometres" in UI copy (`EquipmentInventory`,
+`ExerciseEditor`, `SessionScreen`), in identifiers (`toMetres`, `fromMetres`,
+`METRES_PER_MILE`), and in `CLAUDE.md` and `docs/SCHEMA.md`. The UI also says "Colour
+theme", and comments say "colour", "centred" and "favouring". The owner's standing rule is
+US spelling everywhere.
+
+Recommendation: change it all in one commit, identifiers included, since every caller is in
+`src/`. The database has no column spelled either way. Left open because `CLAUDE.md` states
+the convention in the British spelling, and that file is the owner's.
+
+#### Ruled yes, queued 2026-09-27: all of it, in one commit
+
+The owner chose the full conversion: UI copy, identifiers, comments, `CLAUDE.md` and
+`docs/SCHEMA.md`. Exempt: migration files already applied, which cannot change, and
+quotations of the old spelling where a document records what the code once said.
+
 ### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
 
 *Added 2026-09-27 11:14:58.*
@@ -326,7 +317,38 @@ None matters at one user's data volume. One migration covers all three; run
 `supabase db lint` and the advisors after it. The eleven "unused index" notices are an
 artifact of little traffic and should be left alone.
 
+### OPEN-27-db-types — Keep or drop the db:types script
+
+*Added 2026-09-27 11:14:59.*
+
+`npm run db:types` (and `make db-types`) writes `src/lib/database.types.ts` into a
+JavaScript project. The file is not committed and nothing imports it.
+
+Recommendation: remove the script and target. Adopt them only alongside a move to
+TypeScript or JSDoc type checking, which would be its own decision.
+
+#### Ruled yes, queued 2026-09-27: remove it
+
+The owner chose to drop the script. Build: remove `db:types` from `package.json`, the
+`db-types` target from the `Makefile`, and its row from the README.
+
 ## Settled
+
+### OPEN-28-bundle-size — Split the 520 kB bundle?
+
+*Added 2026-09-27 11:14:59 · ruled no 2026-09-27 11:38:25.*
+
+The production bundle is one 520 kB chunk (143 kB gzipped), over Vite's warning threshold.
+Splitting the editors and History behind `React.lazy` would shrink the first load.
+
+Recommendation: leave it. The app is used on a device that loads it once and keeps it, and
+`verify-build.mjs` asserts every screen is in the bundle, a check that splitting would have
+to be taught. Reopen if first load is ever noticeably slow on a phone.
+
+#### Ruled no 2026-09-27
+
+The owner chose to leave the bundle whole, for the reasons above. Reopen if first load is
+ever noticeably slow on a phone.
 
 ### TODO-5-session-distance — Distances are shown and entered in raw meters during a session
 
