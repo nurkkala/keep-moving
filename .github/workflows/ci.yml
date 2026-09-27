@@ -50,9 +50,10 @@ jobs:
         id: creds
         env:
           TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           PROJECT: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
-          if [ -n "$TOKEN" ] && [ -n "$PROJECT" ]; then
+          if [ -n "$TOKEN" ] && [ -n "$PASSWORD" ] && [ -n "$PROJECT" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
