@@ -73,8 +73,10 @@ no trace and creates no debt. Adherence reporting would need a source of
 expected sessions that doesn't exist — that's the cost of the simplicity, and
 it was accepted knowingly.
 
-`rest_sec` on a workout overrides the global preference, since a strength
-circuit and a morning stretch don't want the same gap. `time_of_day`,
+Rest belongs to the workout: `rest_sec` on a workout, falling back to 15 when
+unset, since a strength circuit and a morning stretch don't want the same gap.
+A global `preferences.rest_sec` existed once and was dropped because nothing
+read it. `time_of_day`,
 `starts_on`, `ends_on`, and `archived` existed once and were dropped: nothing
 set or enforced them, and a stored value the app ignores is a promise it
 breaks.

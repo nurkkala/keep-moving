@@ -957,14 +957,14 @@ export async function fetchAlternatives(exerciseId, want = 3) {
 /* ================================================================ preferences */
 
 const PREF_DEFAULTS = {
-  voiceURI: null, voiceName: null, rate: 1, restSec: 15, distanceUnit: "mi",
+  voiceURI: null, voiceName: null, rate: 1, distanceUnit: "mi",
   theme: "system",
 };
 
 export async function fetchPrefs() {
   const { data, error } = await supabase
     .from("preferences")
-    .select("voice_uri, voice_name, rate, rest_sec, distance_unit, theme")
+    .select("voice_uri, voice_name, rate, distance_unit, theme")
     .maybeSingle();
 
   if (error) throw error;
@@ -974,13 +974,12 @@ export async function fetchPrefs() {
     voiceURI: data.voice_uri,
     voiceName: data.voice_name,
     rate: Number(data.rate),
-    restSec: data.rest_sec,
     distanceUnit: data.distance_unit ?? "mi",
     theme: data.theme ?? "system",
   };
 }
 
-/** Accepts any subset: savePrefs({ restSec: 20 }) leaves the voice alone. */
+/** Accepts any subset: savePrefs({ theme: "dark" }) leaves the voice alone. */
 export async function savePrefs(partial) {
   const user = await requireUser();
   const row = { user_id: user.id, updated_at: new Date().toISOString() };
@@ -988,7 +987,6 @@ export async function savePrefs(partial) {
   if ("voiceURI" in partial) row.voice_uri = partial.voiceURI;
   if ("voiceName" in partial) row.voice_name = partial.voiceName;
   if ("rate" in partial) row.rate = partial.rate;
-  if ("restSec" in partial) row.rest_sec = partial.restSec;
   if ("distanceUnit" in partial) row.distance_unit = partial.distanceUnit;
   if ("theme" in partial) row.theme = partial.theme;
 
