@@ -8,7 +8,7 @@ import { StretchHorizontal, Dumbbell, Shield, HeartPulse } from "lucide-react";
  * which is how `strength` ended up the only kind whose text and fill were the
  * same step. One definition now; import from here.
  *
- * `ring` is the SVG stroke the session timer draws with — same colour, a
+ * `ring` is the SVG stroke the session timer draws with — same color, a
  * property SVG needs spelled differently.
  */
 export const KINDS = {
@@ -19,11 +19,11 @@ export const KINDS = {
 };
 
 /**
- * A 4px dot said the kind in colour alone — unreadable if you don't already
+ * A 4px dot said the kind in color alone — unreadable if you don't already
  * know the code, and invisible if you can't separate the hues. The badge keeps
- * the colour but adds a shape, and `title` says it in words.
+ * the color but adds a shape, and `title` says it in words.
  *
- * `text-on-accent` is the foreground in both themes: kind colours are light in
+ * `text-on-accent` is the foreground in both themes: kind colors are light in
  * dark mode and dark in light mode, and that token flips the same way.
  */
 export default function KindBadge({ kind, size = "md", className = "" }) {

@@ -21,7 +21,7 @@ export default function ThemeToggle({ className = "" }) {
   return (
     <div
       role="radiogroup"
-      aria-label="Colour theme"
+      aria-label="Color theme"
       className={`inline-flex rounded-sm border border-line overflow-hidden ${className}`}
     >
       {OPTIONS.map(({ value, label, Icon }) => {

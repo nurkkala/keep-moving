@@ -39,8 +39,8 @@ over frequency targets, every-N-days intervals, and rotating cycles.
 - There is no time of day, no start or end date, and no archive flag. A
   workout belongs to a day and nothing else. These columns existed once and
   were dropped because nothing set or enforced them: a stored value the app
-  doesn't honour is a promise it breaks. Don't add one back without building
-  the behaviour it implies at the same time.
+  doesn't honor is a promise it breaks. Don't add one back without building
+  the behavior it implies at the same time.
 
 If frequency targets ("3× a week") are ever wanted, that's a `target_per_week`
 column plus a weekly count against `sessions` — additive, not a rewrite. Doing
@@ -65,9 +65,9 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 ## Conventions
 
 - **One target, one unit.** `target_type` is 'time', 'reps', or 'distance',
-  and there is a single `target_value` — seconds, a count, or **metres**.
+  and there is a single `target_value` — seconds, a count, or **meters**.
   Never a second number.
-- **Distance is stored in metres, always.** Miles vs kilometres is
+- **Distance is stored in meters, always.** Miles vs kilometers is
   `preferences.distance_unit`, a display concern only, so switching it can
   never change what history says you did. `actual_sec` is recorded alongside,
   which is where pace comes from — don't add a pace column.
@@ -98,7 +98,7 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   not columns.** Hold times, per-side counts, tempo, breathing — the coach
   speaks them aloud and never counts them. "Squeeze at the top for a count" is
   the pattern. Don't add a `hold_sec` column; it would be a stored value the
-  app doesn't honour.
+  app doesn't honor.
 - `workout_exercises` holds position and an optional note. No numbers. If you
   find yourself adding a target column there, the target belongs on the user's
   `exercise_targets` row instead.
@@ -109,7 +109,7 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
 - **A slot is an exercise OR a rule, never both**, enforced by a check
   constraint. A rule slot has `pick_count` and tags in `workout_slot_tags`, and
   resolves at session start via `resolve_workout()` — least-recently-performed
-  first, so "two arm exercises" rotates and favours what's been neglected.
+  first, so "two arm exercises" rotates and favors what's been neglected.
   `resolve_workout` and `workout_sequence` are **volatile**: two calls give
   different answers by design. Don't mark them stable.
 - Rule tags are ANDed. Two tags means an exercise must carry both.
@@ -124,18 +124,18 @@ See `docs/SCHEMA.md` for the data model and the reasoning behind it.
   `sessions` keeps `workout_name`, so renaming something doesn't rewrite what
   your history says you did. Don't "fix" this by joining to live rows.
 - `days_of_week` is JavaScript's convention: 0 = Sunday, 6 = Saturday.
-- **No raw palette colours in components.** Every colour goes through a
+- **No raw palette colors in components.** Every color goes through a
   semantic token defined in `src/index.css` — `bg-canvas`, `text-subtle`,
   `border-line`, `ring-accent`. A `bg-slate-900` in a component only renders
   correctly in one theme, which is the bug the tokens exist to prevent.
-- **`kind` colour is not severity.** The four exercise kinds have their own
+- **`kind` color is not severity.** The four exercise kinds have their own
   scale (`kind-stretch`, `kind-strength`, `kind-core`, `kind-cardio`). Cardio
   is rose and errors are rose, but they're different tokens on purpose — don't
   reuse `danger` for cardio just because they match today.
 - **The four kinds are defined once, in `components/KindBadge.jsx`.** That map
   was previously copied into four components with drifting shapes. Import
   `KINDS` from there; don't redeclare it. Kind is shown as a `KindBadge` —
-  colour plus a glyph plus a `title`, because a coloured dot alone says nothing
+  color plus a glyph plus a `title`, because a colored dot alone says nothing
   to someone who doesn't know the code and nothing at all to someone who can't
   separate the hues.
 - **Never `window.confirm`, `window.prompt`, or `window.alert`.** They can't be

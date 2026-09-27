@@ -39,7 +39,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-18-a11y-labels | [Accessible names read undefined or wrong](#todo-18-a11y-labels--accessible-names-read-undefined-or-wrong) | 🔨 queued |
 | TODO-19-editor-stale | [Workout editor pickers show stale results](#todo-19-editor-stale--workout-editor-pickers-show-stale-results) | 🔨 queued |
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | 🔨 queued |
-| OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | 🔨 queued |
+| OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | 🔨 queued |
 | TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | 🔨 queued |
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
@@ -248,26 +248,6 @@ The History header reads "N min across M sessions". `N` is all-time minutes from
 sessions the line pairs two different populations. Count sessions in the same query as the
 totals.
 
-### OPEN-21-us-spelling — Should metres become meters in copy and identifiers?
-
-*Added 2026-09-27 11:14:58.*
-
-The project writes "metres" and "kilometres" in UI copy (`EquipmentInventory`,
-`ExerciseEditor`, `SessionScreen`), in identifiers (`toMetres`, `fromMetres`,
-`METRES_PER_MILE`), and in `CLAUDE.md` and `docs/SCHEMA.md`. The UI also says "Colour
-theme", and comments say "colour", "centred" and "favouring". The owner's standing rule is
-US spelling everywhere.
-
-Recommendation: change it all in one commit, identifiers included, since every caller is in
-`src/`. The database has no column spelled either way. Left open because `CLAUDE.md` states
-the convention in the British spelling, and that file is the owner's.
-
-#### Ruled yes, queued 2026-09-27: all of it, in one commit
-
-The owner chose the full conversion: UI copy, identifiers, comments, `CLAUDE.md` and
-`docs/SCHEMA.md`. Exempt: migration files already applied, which cannot change, and
-quotations of the old spelling where a document records what the code once said.
-
 ### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
 
 *Added 2026-09-27 11:14:58.*
@@ -318,6 +298,30 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### OPEN-21-us-spelling — Should metres become meters in copy and identifiers?
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:11:49.*
+
+Until 2026-09-27 the project wrote "metres" and "kilometres" in UI copy (`EquipmentInventory`,
+`ExerciseEditor`, `SessionScreen`), in identifiers (`toMetres`, `fromMetres`,
+`METRES_PER_MILE`), and in `CLAUDE.md` and `docs/SCHEMA.md`. The UI also said "Colour
+theme", and comments said "colour", "centred" and "favouring". The owner's standing rule is
+US spelling everywhere.
+
+Recommendation: change it all in one commit, identifiers included, since every caller is in
+`src/`. The database has no column spelled either way. Left open because `CLAUDE.md` states
+the convention in the British spelling, and that file is the owner's.
+
+#### Ruled yes, queued 2026-09-27: all of it, in one commit
+
+The owner chose the full conversion: UI copy, identifiers, comments, `CLAUDE.md` and
+`docs/SCHEMA.md`. Exempt: migration files already applied, which cannot change, and
+quotations of the old spelling where a document records what the code once said.
+
+Built the same day: 14 files, identifiers included (`toMeters`, `fromMeters`,
+`METERS_PER_MILE`), plus `canceled` and `unrecognized`. The applied migrations were left as
+they are.
 
 ### OPEN-27-db-types — Keep or drop the db:types script
 

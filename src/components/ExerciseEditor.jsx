@@ -233,7 +233,7 @@ export default function ExerciseEditor({ exercise, onClose, onSaved }) {
               {suggestedType === "time"
                 ? "Seconds"
                 : suggestedType === "distance"
-                ? "Metres"
+                ? "Meters"
                 : "Reps"}
             </span>
             <input

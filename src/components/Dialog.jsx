@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
  *
  * The native ones can't be themed, ignore the dark/light choice entirely, and
  * render as a desktop alert on a screen sized for a thumb. These match the
- * sheets: full-width from the bottom on a phone, a centred panel above `sm`.
+ * sheets: full-width from the bottom on a phone, a centered panel above `sm`.
  *
  * Escape cancels and focus moves into the dialog on open, which the native
  * dialogs gave for free and a div does not.
@@ -42,7 +42,7 @@ export const CANCEL =
   "focus:outline-none focus:ring-1 focus:ring-accent";
 
 /**
- * `destructive` is its own colour rather than the accent, because the button
+ * `destructive` is its own color rather than the accent, because the button
  * that deletes your history should not look like the button that saves.
  */
 export function ConfirmDialog({

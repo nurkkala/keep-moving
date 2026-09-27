@@ -3,7 +3,7 @@ import { X, RotateCcw } from "lucide-react";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import {
   setExerciseTarget, clearExerciseTarget, describeTarget,
-  toMetres, fromMetres,
+  toMeters, fromMeters,
 } from "../lib/data";
 
 /**
@@ -117,9 +117,9 @@ export default function TargetSheet({ exercise, onClose, onSaved }) {
               type="number"
               min="0.1"
               step="0.1"
-              value={fromMetres(targetValue, unit)}
+              value={fromMeters(targetValue, unit)}
               onChange={(e) =>
-                setTargetValue(toMetres(parseFloat(e.target.value) || 0, unit))
+                setTargetValue(toMeters(parseFloat(e.target.value) || 0, unit))
               }
               className="mt-1 w-full bg-canvas border border-line-hi rounded-sm px-3 py-2 text-sm
                          focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"

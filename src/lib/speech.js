@@ -167,7 +167,7 @@ function numberIn(text) {
 }
 
 /**
- * Maps loose speech to a command. Returns null for anything unrecognised,
+ * Maps loose speech to a command. Returns null for anything unrecognized,
  * which the caller ignores — a false positive mid-workout is worse than a
  * miss, since it silently logs the wrong number.
  *

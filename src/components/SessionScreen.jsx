@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import {
   fetchWorkoutSequence, fetchPrefs, saveSession, describeTarget,
-  formatDistance, toMetres, fromMetres,
+  formatDistance, toMeters, fromMeters,
 } from "../lib/data";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import { KINDS } from "./KindBadge";
@@ -24,7 +24,7 @@ function announce(step, unit) {
  * stored unit. Reps pass through both of these unchanged.
  */
 function toStored(step, n, unit) {
-  return step.targetType === "distance" ? toMetres(n, unit) : n;
+  return step.targetType === "distance" ? toMeters(n, unit) : n;
 }
 
 function spokenCount(step, value, unit) {
@@ -64,7 +64,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   /* ------------------------------------------------------------ load + voice */
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
 
     (async () => {
       try {
@@ -72,7 +72,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
           fetchWorkoutSequence(workout.id),
           fetchPrefs(),
         ]);
-        if (cancelled) return;
+        if (canceled) return;
 
         if (!sequence.length) {
           setError("This workout has no exercises yet.");
@@ -81,7 +81,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         }
 
         await whenVoicesReady();
-        if (cancelled) return;
+        if (canceled) return;
 
         speakerRef.current = createSpeaker({
           voiceURI: prefs.voiceURI,
@@ -94,7 +94,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         setSteps(sequence);
         setLoading(false);
       } catch (e) {
-        if (!cancelled) {
+        if (!canceled) {
           setError(e.message ?? "Couldn't load this workout.");
           setLoading(false);
         }
@@ -102,7 +102,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     })();
 
     return () => {
-      cancelled = true;
+      canceled = true;
       speakerRef.current?.stop();
       listenerRef.current?.stop();
     };
@@ -507,7 +507,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {step.targetType === "distance"
-                ? fromMetres(repCount ?? step.targetValue, unit)
+                ? fromMeters(repCount ?? step.targetValue, unit)
                 : repCount ?? step.targetValue}
             </span>
             <span className="block mt-1 text-[11px] uppercase tracking-[0.2em] text-subtle">

@@ -309,35 +309,35 @@ export async function fetchAttributeUsage() {
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const METRES_PER_MILE = 1609.344;
+const METERS_PER_MILE = 1609.344;
 
-/** Distance is stored in metres; this is only ever a display concern. */
-export function formatDistance(metres, unit = "mi", { long = false } = {}) {
-  if (metres == null) return "";
+/** Distance is stored in meters; this is only ever a display concern. */
+export function formatDistance(meters, unit = "mi", { long = false } = {}) {
+  if (meters == null) return "";
 
-  const value = unit === "km" ? metres / 1000 : metres / METRES_PER_MILE;
+  const value = unit === "km" ? meters / 1000 : meters / METERS_PER_MILE;
   // Under a tenth reads better as the raw unit than as "0.1".
   const rounded = value < 0.95 ? value.toFixed(2) : value.toFixed(1).replace(/\.0$/, "");
 
   if (!long) return `${rounded} ${unit}`;
-  return `${rounded} ${unit === "km" ? "kilometres" : "miles"}`;
+  return `${rounded} ${unit === "km" ? "kilometers" : "miles"}`;
 }
 
-/** Turns a typed distance back into metres for storage. */
-export function toMetres(value, unit = "mi") {
-  return Math.round(unit === "km" ? value * 1000 : value * METRES_PER_MILE);
+/** Turns a typed distance back into meters for storage. */
+export function toMeters(value, unit = "mi") {
+  return Math.round(unit === "km" ? value * 1000 : value * METERS_PER_MILE);
 }
 
 /**
- * Metres to a number suitable for an input box in the user's unit.
+ * Meters to a number suitable for an input box in the user's unit.
  *
- * Two decimal places, so a metres → miles → metres roundtrip is lossy by up
+ * Two decimal places, so a meters → miles → meters roundtrip is lossy by up
  * to ~16 m. That's why the target sheet only writes back when the field is
  * actually edited: opening and closing it must not nudge the number.
  */
-export function fromMetres(metres, unit = "mi") {
-  if (metres == null) return "";
-  const v = unit === "km" ? metres / 1000 : metres / METRES_PER_MILE;
+export function fromMeters(meters, unit = "mi") {
+  if (meters == null) return "";
+  const v = unit === "km" ? meters / 1000 : meters / METERS_PER_MILE;
   return Math.round(v * 100) / 100;
 }
 
@@ -366,10 +366,10 @@ export function describeTarget(
 }
 
 /** "8:12 / mi" — only meaningful for a distance set that was actually done. */
-export function describePace(metres, seconds, unit = "mi") {
-  if (!metres || !seconds) return "";
-  const per = unit === "km" ? 1000 : METRES_PER_MILE;
-  const secsPerUnit = seconds / (metres / per);
+export function describePace(meters, seconds, unit = "mi") {
+  if (!meters || !seconds) return "";
+  const per = unit === "km" ? 1000 : METERS_PER_MILE;
+  const secsPerUnit = seconds / (meters / per);
   const m = Math.floor(secsPerUnit / 60);
   const sec = Math.round(secsPerUnit % 60);
   return `${m}:${String(sec).padStart(2, "0")} / ${unit}`;

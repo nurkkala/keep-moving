@@ -37,13 +37,13 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     fetchWorkoutSlots(workout.id)
-      .then((rows) => !cancelled && setList(rows))
-      .catch((e) => !cancelled && setError(e.message))
-      .finally(() => !cancelled && setLoading(false));
+      .then((rows) => !canceled && setList(rows))
+      .catch((e) => !canceled && setError(e.message))
+      .finally(() => !canceled && setLoading(false));
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, [workout.id]);
 
@@ -338,7 +338,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
 
         <p className="mt-3 text-[11px] text-faint">
           Targets are set per exercise, not per workout — tap one in the workout view to change it.
-          Rule slots pick fresh exercises each session, favouring whatever you've done least
+          Rule slots pick fresh exercises each session, favoring whatever you've done least
           recently.
         </p>
 
@@ -391,17 +391,17 @@ function ExercisePicker({ exclude, onPick, onClose }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     setLoading(true);
 
     const timer = setTimeout(() => {
       fetchExercises({ search, valueKeys: active })
-        .then((rows) => !cancelled && setResults(rows))
-        .finally(() => !cancelled && setLoading(false));
+        .then((rows) => !canceled && setResults(rows))
+        .finally(() => !canceled && setLoading(false));
     }, 250);
 
     return () => {
-      cancelled = true;
+      canceled = true;
       clearTimeout(timer);
     };
   }, [search, active]);

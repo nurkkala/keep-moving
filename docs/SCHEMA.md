@@ -35,21 +35,21 @@ never both.
 ### One target, one unit
 
 `target_type` is `'time'`, `'reps'`, or `'distance'`, and there is a single
-`target_value`: seconds, a count, or **metres**. Never a second number.
+`target_value`: seconds, a count, or **meters**. Never a second number.
 
 Two nullable columns plus a discriminator once allowed a contradictory row —
 `type='time'` with both 45 seconds and 12 reps passed the constraint, and the
 extra value sat there silently ignored. One value plus its unit makes that
 state unrepresentable rather than merely forbidden.
 
-Distance is stored in metres always; miles vs kilometres is
+Distance is stored in meters always; miles vs kilometers is
 `preferences.distance_unit`, a display concern, so switching it can never
 change what your history says you did. `actual_sec` is recorded alongside,
 which is where pace comes from — there is no pace column.
 
 Hold times, per-side counts, tempo, and breathing aren't targets at all. The
 coach speaks them and never counts them, so they live in `instructions` prose.
-A `hold_sec` column would be a stored value the app doesn't honour.
+A `hold_sec` column would be a stored value the app doesn't honor.
 
 ## Scheduling
 
@@ -221,7 +221,7 @@ All are `security invoker`, so RLS applies normally.
 
 `resolve_workout` picks **least-recently-performed first**, with a random
 tiebreak among never-done exercises, so "two arm exercises" rotates through the
-library instead of returning the same favourite every week. Two calls give
+library instead of returning the same favorite every week. Two calls give
 different answers by design — `resolve_workout` and `workout_sequence` are
 volatile on purpose. Don't mark them stable.
 
@@ -265,7 +265,7 @@ import {
   fetchWorkoutEquipment, fetchAlternatives,
   // preferences and formatting
   fetchPrefs, savePrefs, describeTarget, describePace,
-  formatDistance, toMetres, fromMetres,
+  formatDistance, toMeters, fromMeters,
 } from "./lib/data";
 
 // Everything tagged for a condition, across all body areas

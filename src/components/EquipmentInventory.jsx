@@ -158,7 +158,7 @@ export default function EquipmentInventory({ onBack }) {
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
                   { v: "mi", label: "Miles" },
-                  { v: "km", label: "Kilometres" },
+                  { v: "km", label: "Kilometers" },
                 ].map((o) => (
                   <button
                     key={o.v}
@@ -174,7 +174,7 @@ export default function EquipmentInventory({ onBack }) {
                 ))}
               </div>
               <p className="mt-2 text-[11px] text-faint">
-                Distances are stored in metres either way, so switching this never changes what
+                Distances are stored in meters either way, so switching this never changes what
                 your history says you did.
               </p>
             </div>

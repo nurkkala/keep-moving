@@ -52,20 +52,20 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
       setData(exercise);
       return;
     }
-    let cancelled = false;
+    let canceled = false;
     setLoading(true);
 
     fetchExercise(exerciseId)
       .then((found) => {
-        if (cancelled) return;
+        if (canceled) return;
         if (!found) setError("That exercise no longer exists.");
         else setData(found);
       })
-      .catch(() => !cancelled && setError("Couldn't load this exercise."))
-      .finally(() => !cancelled && setLoading(false));
+      .catch(() => !canceled && setError("Couldn't load this exercise."))
+      .finally(() => !canceled && setLoading(false));
 
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, [exercise, exerciseId]);
 
@@ -74,20 +74,20 @@ export default function ExerciseDetail({ exercise, exerciseId, onClose, onEdit }
   useEffect(() => {
     const id = data?.id ?? exerciseId;
     if (!id) return;
-    let cancelled = false;
+    let canceled = false;
 
     fetchAvailability()
       .then((all) => {
-        if (cancelled) return;
+        if (canceled) return;
         const mine = all[id];
         if (!mine || mine.canDo) return setBlocked(null);
         setBlocked(mine);
-        return fetchAlternatives(id).then((alts) => !cancelled && setAlternatives(alts));
+        return fetchAlternatives(id).then((alts) => !canceled && setAlternatives(alts));
       })
       .catch(() => {});
 
     return () => {
-      cancelled = true;
+      canceled = true;
     };
   }, [data?.id, exerciseId]);
 

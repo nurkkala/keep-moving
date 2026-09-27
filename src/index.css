@@ -4,7 +4,7 @@
    the system. The inline script in index.html sets it before first paint. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Every colour in the app resolves through one of these. `inline` makes the
+/* Every color in the app resolves through one of these. `inline` makes the
    utilities emit var(--t-*) rather than baking a value at build time, which is
    what lets a single class flip themes.
 
@@ -46,7 +46,7 @@
   --color-warn-deep: var(--t-warn-deep);
   --color-warn-bg: var(--t-warn-bg);
 
-  /* `kind` is the exercise's own colour and has nothing to do with severity —
+  /* `kind` is the exercise's own color and has nothing to do with severity —
      cardio being rose doesn't make it an error. Kept as its own scale so the
      two can't drift into each other. */
   --color-kind-stretch: var(--t-kind-stretch);
