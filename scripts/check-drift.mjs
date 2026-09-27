@@ -18,7 +18,9 @@ import { execFileSync } from "node:child_process";
 
 let raw;
 try {
-  raw = execFileSync("supabase", ["migration", "list"], {
+  // JSON is requested by name: it was the default when piped on the CLI this
+  // was written against, and a CI run on 2026-09-27 got something else.
+  raw = execFileSync("supabase", ["migration", "list", "--output-format", "json"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -32,7 +34,8 @@ try {
 // The CLI prints an update banner around the JSON; take the object line.
 const line = raw.split("\n").find((l) => l.trim().startsWith("{"));
 if (!line) {
-  console.error("check-drift: no JSON in `supabase migration list` output.");
+  console.error("check-drift: no JSON in `supabase migration list` output:");
+  for (const l of raw.split("\n").slice(0, 8)) console.error(`  | ${l}`);
   process.exit(2);
 }
 
