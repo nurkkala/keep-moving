@@ -13,7 +13,7 @@ make dev                       # http://localhost:5173, hot reload
 
 `make dev` installs dependencies if they're stale and stops with a readable
 message if `.env.local` is missing, so it's the only command needed from a
-fresh clone. `make help` lists all 15 targets. Override the port with
+fresh clone. `make help` lists every target. Override the port with
 `make dev PORT=3000`.
 
 | | |
@@ -22,7 +22,8 @@ fresh clone. `make help` lists all 15 targets. Override the port with
 | `make run` | Build for production, then serve that build |
 | `make build` | Production build + verify every screen shipped |
 | `make preview` | Serve an existing build without rebuilding |
-| `make check` | What CI would run |
+| `make check` | Build, migrations, and the roadmap — CI runs all but the roadmap |
+| `make todo` | What is queued and open on the roadmap |
 | `make clean` | Drop build output and Vite's cache |
 
 There is no separate backend to run. The app is a Vite SPA against hosted
@@ -41,8 +42,8 @@ spoken announcements, the logging — works anywhere.
 
 ## The database
 
-Twenty-six migrations in `supabase/migrations/`, matching the versions already
-applied to the linked project. To work against them:
+The migrations in `supabase/migrations/` match the versions already applied to
+the linked project. To work against them:
 
 ```bash
 supabase link --project-ref irjgefdsllshzzqxzful   # once
@@ -112,7 +113,8 @@ scripts/                  Build verification
 Makefile                  Every task worth running; `make help` lists them
 docs/SCHEMA.md            The data model and why it's shaped that way
 docs/INTEGRATION.md       How the original prototype came off window.storage
-CLAUDE.md                 Conventions and open work
+CLAUDE.md                 Conventions
+docs/dev/roadmap.md       Open work and decisions, generated from docs/dev/roadmap/
 ```
 
 ## Building

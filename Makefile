@@ -10,8 +10,14 @@ SHELL := /bin/bash
 PORT ?= 5173
 ENV_FILE := .env.local
 
+# The roadmap tool is the `roadmap-ledger` package from the owner's skills repo,
+# installed once with `uv tool install`. This is an npm project, so there is no
+# uv lockfile to pin it in; override if it lives elsewhere.
+ROADMAP ?= roadmap
+
 .PHONY: help install dev run build preview verify check migrations clean reset \
-        db-check db-status db-push db-new db-lint db-types
+        db-check db-status db-push db-new db-lint db-types \
+        roadmap roadmap-check todo
 
 help: ## Show this help
 	@echo "Keep Moving — make targets"
@@ -56,11 +62,23 @@ build: node_modules $(ENV_FILE) ## Production build + verify every screen shippe
 verify: ## Re-run the bundle check against the current dist/
 	npm run verify
 
-check: build migrations ## What CI runs: build, screens present, migrations sane
+check: build migrations roadmap-check ## Build, screens present, migrations sane, roadmap current
 	@echo "ok"
 
 migrations: ## Migrations well-named and committed (no network)
 	@node scripts/check-migrations.mjs
+
+# --- roadmap ----------------------------------------------------------------
+
+roadmap: ## Rebuild docs/dev/roadmap.md from the ticket files
+	$(ROADMAP) build
+
+# In `check` because a stale generated page is the drift the roadmap exists to prevent.
+roadmap-check: ## The roadmap alone: tickets valid, generated page current
+	$(ROADMAP) check
+
+todo: ## What is queued, open, and in flight, by priority
+	$(ROADMAP) status
 
 # --- database (acts on the LINKED REMOTE project) ---------------------------
 

@@ -211,18 +211,17 @@ Run `supabase db lint` and check the dashboard's Security Advisor after any
 change that adds a table — a table without RLS enabled is readable by anyone
 holding the anon key, which is public.
 
-## TODO
+## Open work: the roadmap
 
-The five items that stood here — port the timer, target editor, exercise
-editor, workout editor, and history against workouts — are all done, and the
-list was left describing work that had already shipped. Verified against the
-code: `SessionScreen` walks `fetchWorkoutSequence` and calls `saveSession`
-with no `window.storage` left; `TargetSheet` calls `setExerciseTarget` and
-`clearExerciseTarget`; `ExerciseEditor` is reached from both `WorkoutPicker`
-and `WorkoutEditor`; `WorkoutEditor` is reached from `App`; and `History`
-groups by session and shows `workoutName`.
+Open work and open questions live in `docs/dev/roadmap/`, one file per ticket,
+with `docs/dev/roadmap.md` generated from them. Use the `roadmap` tool: `make
+todo` for what is waiting, `roadmap add` to file a ticket, `roadmap close` to
+settle one. Never hand-edit the generated page; `make check` fails when it is
+stale.
 
-Nothing is queued. **Program** remains reserved and unbuilt — see Vocabulary.
+The five items the old TODO list held (the timer, target editor, exercise editor, workout editor,
+and history against workouts) shipped before the roadmap existed.
+**Program** remains reserved and unbuilt — see Vocabulary.
 
 `docs/INTEGRATION.md` is now a historical record of that port rather than a
 plan. It still names `exercise-coach.jsx` and `ExerciseCoach`, which are the
