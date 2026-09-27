@@ -12,5 +12,5 @@ priority: 5
 in `data.js` computes it. Nothing calls it, so pace is never shown.
 
 Recommendation: show it on distance rows in History and on the completion screen, in the
-user's unit (depends on TODO-5-session-distance for the unit plumbing). Otherwise delete
+user's unit, which `useDistanceUnit` now supplies (TODO-5-session-distance, done). Otherwise delete
 `describePace` with the rest of TODO-23-dead-code.
