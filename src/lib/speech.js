@@ -96,6 +96,8 @@ export function whenVoicesReady() {
  * recognition — without it the coach reliably hears itself.
  */
 export function createSpeaker({ voiceURI, rate = 1, onSpeakingChange } = {}) {
+  // Never read, on purpose: holding the utterance keeps Chrome from collecting
+  // it mid-speech, which drops its `onend` and would leave recognition muted.
   let current = null;
   let queued = 0;
 

@@ -55,12 +55,10 @@ A `hold_sec` column would be a stored value the app doesn't honor.
 
 `days_of_week` is a `smallint[]` using **JavaScript's convention** — 0 is Sunday
 through 6 is Saturday — so it drops straight into `Date.getDay()` with no
-translation. A GIN index makes "what's on today" a fast containment query:
-
-```js
-await fetchWorkoutsForDay();        // today, local time
-await fetchWorkoutsForDay(1);       // Mondays
-```
+translation. The picker loads every workout and splits out today's with
+`w.days.includes(new Date().getDay())`, since the whole list is on screen
+anyway. The GIN index on `days_of_week` would serve a containment query if the
+list ever grew past that; nothing issues one today.
 
 Scheduling lives on the workout rather than in a separate table because the
 shape is fixed and small. An empty `days_of_week` is valid and means on-demand:
@@ -255,15 +253,15 @@ import {
   fetchExercises, fetchExercise, saveExercise, deleteExercise,
   fetchAttributeTypes, createAttributeValue,
   // workouts and slots
-  fetchWorkouts, fetchWorkoutsForDay, fetchOrSeedWorkouts,
+  fetchOrSeedWorkouts,
   createWorkout, saveWorkout, deleteWorkout,
   fetchWorkoutExercises, fetchWorkoutSlots,
-  fetchWorkoutSequence, previewWorkout, describeRule, describeDays,
+  fetchWorkoutSequence, describeRule, describeDays,
   // targets
   fetchTargets, setExerciseTarget, clearExerciseTarget,
   // sessions and history
   saveSession, fetchHistory, fetchPerformanceHistory, fetchBests,
-  deleteSession, clearHistory, fetchKindTotals, fetchSessionCount,
+  clearHistory, fetchKindTotals, fetchSessionCount,
   // equipment
   fetchEquipment, setEquipmentOwned, fetchAvailability,
   fetchWorkoutEquipment, fetchAlternatives,

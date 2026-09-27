@@ -378,22 +378,10 @@ function shapeWorkout(w) {
 }
 
 /** All workouts with counts and a rough duration, for the picker screen. */
-export async function fetchWorkouts() {
+async function fetchWorkouts() {
   const { data, error } = await supabase
     .from("workout_summaries")
     .select("*")
-    .order("position");
-
-  if (error) throw error;
-  return (data ?? []).map(shapeWorkout);
-}
-
-/** Workouts scheduled for a given weekday. Defaults to today, in local time. */
-export async function fetchWorkoutsForDay(dayOfWeek = new Date().getDay()) {
-  const { data, error } = await supabase
-    .from("workout_summaries")
-    .select("*")
-    .contains("days_of_week", [dayOfWeek])
     .order("position");
 
   if (error) throw error;
@@ -548,26 +536,6 @@ export async function saveWorkout(workoutId, { name, days, orderMode, restSec },
     items,
   });
   if (error) throw error;
-}
-
-/**
- * What a workout resolves to right now. Rule slots pick their exercises on
- * each call — least-recently-performed first — so this varies between calls
- * by design. Use it to preview; the session gets its own resolution.
- */
-export async function previewWorkout(workoutId) {
-  const { data, error } = await supabase.rpc("resolve_workout", {
-    target_workout: workoutId,
-  });
-  if (error) throw error;
-
-  return (data ?? []).map((r) => ({
-    ordinal: r.ordinal,
-    slotId: r.slot_id,
-    exerciseId: r.exercise_id,
-    fromRule: r.from_rule,
-    note: r.note ?? "",
-  }));
 }
 
 /** First run: creates a weekday workout from the shared library. */
@@ -777,11 +745,11 @@ export async function saveSession({ totalSec, items, workoutId = null, orderMode
   return { id: newId, at: Date.now(), totalSec: Math.round(totalSec) };
 }
 
-export async function deleteSession(id) {
-  const { error } = await supabase.from("sessions").delete().eq("id", id);
-  if (error) throw error;
-}
-
+/**
+ * The `user_id` filter looks like the hand filtering CLAUDE.md forbids, but
+ * PostgREST refuses a DELETE with no filter at all. RLS still does the access
+ * control; this only gives the delete the filter it requires.
+ */
 export async function clearHistory() {
   const user = await requireUser();
   const { error } = await supabase.from("sessions").delete().eq("user_id", user.id);

@@ -41,7 +41,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-20-history-stat | [The history summary divides all-time minutes by at most 40 sessions](#todo-20-history-stat--the-history-summary-divides-all-time-minutes-by-at-most-40-sessions) | ✅ done |
 | OPEN-21-us-spelling | [Should metres become meters in copy and identifiers?](#open-21-us-spelling--should-metres-become-meters-in-copy-and-identifiers) | ✅ done |
 | TODO-22-kinds-copy | [ExerciseEditor redeclares the exercise kinds](#todo-22-kinds-copy--exerciseeditor-redeclares-the-exercise-kinds) | ✅ done |
-| TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | 🔨 queued |
+| TODO-23-dead-code | [Unused exports in data.js and speech.js](#todo-23-dead-code--unused-exports-in-datajs-and-speechjs) | ✅ done |
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
 | TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | 🔨 queued |
@@ -136,20 +136,6 @@ It checks new passwords against HaveIBeenPwned. It is a dashboard toggle under A
 no migration and nothing to build:
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
-### TODO-23-dead-code — Unused exports in data.js and speech.js
-
-*Added 2026-09-27 11:14:58.*
-
-Exported and imported nowhere: `describePace` (see OPEN-17-pace-display),
-`fetchWorkoutsForDay`, `previewWorkout` and `deleteSession` in `data.js`. (`fetchTargets`
-was on this list until TODO-9-target-sheet put it to use.) `formatDistance` and `fetchWorkouts` are used only inside
-`data.js` and need not be exported. In `speech.js`, `tierOf` and `prettyVoice` are unused
-(see OPEN-16-voice-prefs) and `current` is written and never read.
-
-Also add a comment at `clearHistory`: its `.eq("user_id", …)` looks like the hand filtering
-`CLAUDE.md` forbids, but PostgREST refuses a delete with no filter, and row level security
-still does the access control. Checked by grep on 2026-09-27.
-
 ### TODO-25-ci-upkeep — CI actions and runner image need updating
 
 *Added 2026-09-27 11:14:59.*
@@ -178,6 +164,26 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-23-dead-code — Unused exports in data.js and speech.js
+
+*Added 2026-09-27 11:14:58 · done 2026-09-27 12:23:53.*
+
+Exported and imported nowhere, as found: `describePace` (see OPEN-17-pace-display),
+`fetchWorkoutsForDay`, `previewWorkout` and `deleteSession` in `data.js`. (`fetchTargets`
+was on this list until TODO-9-target-sheet put it to use.) `formatDistance` and `fetchWorkouts` are used only inside
+`data.js` and need not be exported. In `speech.js`, `tierOf` and `prettyVoice` are unused
+(see OPEN-16-voice-prefs) and `current` is written and never read.
+
+Also add a comment at `clearHistory`: its `.eq("user_id", …)` looks like the hand filtering
+`CLAUDE.md` forbids, but PostgREST refuses a delete with no filter, and row level security
+still does the access control. Checked by grep on 2026-09-27.
+
+#### Built 2026-09-27
+
+Removed `fetchWorkoutsForDay`, `previewWorkout` and `deleteSession`, and stopped exporting `fetchWorkouts`. `formatDistance` stays exported: TODO-5-session-distance gave it callers in History and the session screen. `describePace`, `tierOf` and `prettyVoice` stay until OPEN-17-pace-display and OPEN-16-voice-prefs are ruled, since each ruling may use them.
+
+`current` in `createSpeaker` was **not** dead. Holding the utterance keeps Chrome from garbage-collecting it mid-speech, which drops its `onend` and would leave recognition muted for good; it now carries a comment saying so. `clearHistory` carries the PostgREST comment. `docs/SCHEMA.md` described `fetchWorkoutsForDay` as how "what's on today" is found; it now describes the picker's client-side filter.
 
 ### TODO-22-kinds-copy — ExerciseEditor redeclares the exercise kinds
 
