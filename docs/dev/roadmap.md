@@ -30,7 +30,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-9-target-sheet | [The target sheet corrupts a target on a type switch and wipes its note](#todo-9-target-sheet--the-target-sheet-corrupts-a-target-on-a-type-switch-and-wipes-its-note) | ✅ done |
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
-| TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | 🔨 queued |
+| TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | ✅ done |
 | TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | 🔨 queued |
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 💭 open |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
@@ -126,21 +126,6 @@ close it; production is unaffected, since StrictMode's double run is development
   can succeed alone.
 
 Build: one RPC per save, in a migration, following `save_workout_exercises`.
-
-### TODO-12-silent-errors — Failed loads render as empty states
-
-*Added 2026-09-27 11:14:57.*
-
-Several loads fail into an empty state:
-
-- `History` "Clear history" rejects with no handler and shows nothing.
-- `fetchPerformanceHistory` failing shows "You haven't done this one yet."
-- `WorkoutPicker`'s `fetchWorkoutExercises` failing shows an empty list.
-- `WorkoutEditor`'s `fetchExercises` failing shows "Nothing matches those filters."
-
-And every load error in `WorkoutPicker` tells the user to check `VITE_SUPABASE_URL`, which
-is wrong for a network or row level security failure. Show the error where the content
-would have been, and name configuration only when `isConfigured` is false.
 
 ### TODO-13-discard-confirm — Finished or edited work can be discarded without a confirmation
 
@@ -241,6 +226,25 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-12-silent-errors — Failed loads render as empty states
+
+*Added 2026-09-27 11:14:57 · done 2026-09-27 12:20:58.*
+
+Several loads failed into an empty state:
+
+- `History` "Clear history" rejects with no handler and shows nothing.
+- `fetchPerformanceHistory` failing shows "You haven't done this one yet."
+- `WorkoutPicker`'s `fetchWorkoutExercises` failing shows an empty list.
+- `WorkoutEditor`'s `fetchExercises` failing shows "Nothing matches those filters."
+
+And every load error in `WorkoutPicker` told the user to check `VITE_SUPABASE_URL`, which
+is wrong for a network or row level security failure. Show the error where the content
+would have been, and name configuration only when `isConfigured` is false.
+
+#### Built 2026-09-27
+
+Each of the four now shows its error where the content would have been. The picker's hint now says to check the connection: `App` renders its setup page when credentials are missing, so the picker never runs without them, and `isConfigured` did not need consulting.
 
 ### TODO-9-target-sheet — The target sheet corrupts a target on a type switch and wipes its note
 

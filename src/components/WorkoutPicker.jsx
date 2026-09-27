@@ -129,8 +129,10 @@ export default function WorkoutPicker({ onStart, onEdit, onHistory, onEquipment,
             <AlertCircle size={16} className="text-danger shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-danger-hi">{error}</p>
+              {/* Missing credentials never reach this screen: App shows its setup
+                  page instead. So this is the network or the database talking. */}
               <p className="text-xs text-subtle mt-1">
-                Check that VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in .env.local.
+                Check your connection, then reload.
               </p>
             </div>
           </div>
@@ -240,6 +242,7 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   const unit = useDistanceUnit();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState(null);
   const [detailId, setDetailId] = useState(null);
   const [targetFor, setTargetFor] = useState(null);
   const [editingExercise, setEditingExercise] = useState(null);
@@ -251,7 +254,11 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
   const reloadList = useCallback(() => {
     if (!workout) return Promise.resolve();
     return fetchWorkoutExercises(workout.id)
-      .then(setList)
+      .then((rows) => {
+        setList(rows);
+        setListError(null);
+      })
+      .catch((e) => setListError(e.message ?? "Couldn't load this workout's exercises."))
       .finally(() => setLoading(false));
   }, [workout]);
 
@@ -285,6 +292,8 @@ function WorkoutDetail({ workout, onBack, onStart, onEdit, onTargetChanged }) {
 
         {loading ? (
           <p className="mt-8 text-sm text-subtle">Loading exercises…</p>
+        ) : listError ? (
+          <p className="mt-8 text-sm text-danger">{listError}</p>
         ) : (
           <ul className="mt-7 divide-y divide-line border-y border-line">
             {list.map((ex) => (

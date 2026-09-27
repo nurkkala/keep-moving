@@ -46,7 +46,12 @@ export default function History({ onBack }) {
 
   const clear = async () => {
     setConfirming(false);
-    await clearHistory();
+    try {
+      await clearHistory();
+    } catch (e) {
+      setError(e.message ?? "Couldn't clear your history.");
+      return;
+    }
     load();
   };
 
@@ -179,10 +184,12 @@ function ExerciseProgress({ detail, best, onBack }) {
   const unit = useDistanceUnit();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchPerformanceHistory(detail.exerciseId)
       .then(setRows)
+      .catch((e) => setError(e.message ?? "Couldn't load this exercise's history."))
       .finally(() => setLoading(false));
   }, [detail.exerciseId]);
 
@@ -220,6 +227,8 @@ function ExerciseProgress({ detail, best, onBack }) {
 
         {loading ? (
           <p className="mt-6 text-sm text-subtle">Loading…</p>
+        ) : error ? (
+          <p className="mt-6 text-sm text-danger">{error}</p>
         ) : bySession.length === 0 ? (
           <p className="mt-6 text-sm text-faint">You haven't done this one yet.</p>
         ) : (

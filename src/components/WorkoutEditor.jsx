@@ -382,6 +382,7 @@ function ExercisePicker({ exclude, onPick, onClose }) {
   const [active, setActive] = useState([]);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchError, setSearchError] = useState(null);
 
   useEffect(() => {
     fetchAttributeTypes().then(setAxes).catch(() => {});
@@ -393,7 +394,12 @@ function ExercisePicker({ exclude, onPick, onClose }) {
 
     const timer = setTimeout(() => {
       fetchExercises({ search, valueKeys: active })
-        .then((rows) => !canceled && setResults(rows))
+        .then((rows) => {
+          if (canceled) return;
+          setResults(rows);
+          setSearchError(null);
+        })
+        .catch((e) => !canceled && setSearchError(e.message ?? "Couldn't search the library."))
         .finally(() => !canceled && setLoading(false));
     }, 250);
 
@@ -487,6 +493,8 @@ function ExercisePicker({ exclude, onPick, onClose }) {
 
         {loading ? (
           <p className="mt-6 text-sm text-subtle">Searching…</p>
+        ) : searchError ? (
+          <p className="mt-6 text-sm text-danger">{searchError}</p>
         ) : results.length === 0 ? (
           <p className="mt-6 text-sm text-faint">Nothing matches those filters.</p>
         ) : (
