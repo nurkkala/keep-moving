@@ -16,7 +16,7 @@ ENV_FILE := .env.local
 ROADMAP ?= roadmap
 
 .PHONY: help install dev run build preview verify check migrations clean reset \
-        db-check db-status db-push db-new db-lint db-types \
+        db-check db-status db-push db-new db-lint \
         roadmap roadmap-check todo
 
 help: ## Show this help
@@ -97,9 +97,6 @@ db-new: ## Scaffold a migration: make db-new NAME=add_something
 
 db-lint: ## Lint the schema (run after anything that adds a table)
 	supabase db lint
-
-db-types: ## Regenerate TypeScript types from the linked schema
-	npm run db:types
 
 # --- housekeeping -----------------------------------------------------------
 

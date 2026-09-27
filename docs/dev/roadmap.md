@@ -45,7 +45,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | OPEN-24-double-seed | [The default workout may seed twice in development](#open-24-double-seed--the-default-workout-may-seed-twice-in-development) | 💭 open |
 | TODO-25-ci-upkeep | [CI actions and runner image need updating](#todo-25-ci-upkeep--ci-actions-and-runner-image-need-updating) | 🔨 queued |
 | TODO-26-rls-perf | [Row level security policies re-evaluate auth.uid() per row](#todo-26-rls-perf--row-level-security-policies-re-evaluate-authuid-per-row) | 🔨 queued |
-| OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | 🔨 queued |
+| OPEN-27-db-types | [Keep or drop the db:types script](#open-27-db-types--keep-or-drop-the-dbtypes-script) | ✅ done |
 | OPEN-28-bundle-size | [Split the 520 kB bundle?](#open-28-bundle-size--split-the-520-kb-bundle) | 🚫 ruled no |
 
 ## Open
@@ -317,9 +317,11 @@ None matters at one user's data volume. One migration covers all three; run
 `supabase db lint` and the advisors after it. The eleven "unused index" notices are an
 artifact of little traffic and should be left alone.
 
+## Settled
+
 ### OPEN-27-db-types — Keep or drop the db:types script
 
-*Added 2026-09-27 11:14:59.*
+*Added 2026-09-27 11:14:59 · done 2026-09-27 12:11:15.*
 
 `npm run db:types` (and `make db-types`) writes `src/lib/database.types.ts` into a
 JavaScript project. The file is not committed and nothing imports it.
@@ -331,8 +333,6 @@ TypeScript or JSDoc type checking, which would be its own decision.
 
 The owner chose to drop the script. Build: remove `db:types` from `package.json`, the
 `db-types` target from the `Makefile`, and its row from the README.
-
-## Settled
 
 ### OPEN-28-bundle-size — Split the 520 kB bundle?
 

@@ -57,7 +57,6 @@ make db-status                                     # local and remote should agr
 | `make db-new NAME=add_something` | Scaffold a migration |
 | `make db-push` | Apply pending migrations to the linked project |
 | `make db-lint` | Lint the schema — run after anything that adds a table |
-| `make db-types` | Regenerate TypeScript types from the linked schema |
 
 These act on the **live hosted project**, so none of them is wired into a watch
 loop. Re-applying migrations on every save would run schema changes against the
