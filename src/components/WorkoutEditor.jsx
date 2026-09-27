@@ -35,6 +35,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [confirming, setConfirming] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     let canceled = false;
@@ -142,7 +143,7 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
     <div className="min-h-screen bg-canvas text-ink px-5 py-8 sm:px-8 lg:py-14">
       <div className="max-w-lg lg:max-w-2xl mx-auto">
         <button
-          onClick={onBack}
+          onClick={() => (dirty ? setLeaving(true) : onBack())}
           className="inline-flex items-center gap-1 text-sm text-subtle hover:text-ink-soft
                      focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
         >
@@ -367,6 +368,17 @@ export default function WorkoutEditor({ workout, onBack, onChanged }) {
           destructive
           onConfirm={removeWorkout}
           onCancel={() => setConfirming(false)}
+        />
+      )}
+
+      {leaving && (
+        <ConfirmDialog
+          title="Discard your changes?"
+          body="Nothing you changed here has been saved."
+          confirmLabel="Discard"
+          destructive
+          onConfirm={onBack}
+          onCancel={() => setLeaving(false)}
         />
       )}
     </div>

@@ -31,7 +31,7 @@ Tickets are files under `docs/dev/roadmap/`; this page is generated from them by
 | TODO-10-atomic-saves | [Exercise and workout saves can half-succeed](#todo-10-atomic-saves--exercise-and-workout-saves-can-half-succeed) | 🔨 queued |
 | OPEN-11-rest-pref | [Should preferences.rest_sec drive the rest timer?](#open-11-rest-pref--should-preferencesrest_sec-drive-the-rest-timer) | ✅ done |
 | TODO-12-silent-errors | [Failed loads render as empty states](#todo-12-silent-errors--failed-loads-render-as-empty-states) | ✅ done |
-| TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | 🔨 queued |
+| TODO-13-discard-confirm | [Finished or edited work can be discarded without a confirmation](#todo-13-discard-confirm--finished-or-edited-work-can-be-discarded-without-a-confirmation) | ✅ done |
 | OPEN-14-tests-lint | [Is there a test suite and a linter?](#open-14-tests-lint--is-there-a-test-suite-and-a-linter) | 💭 open |
 | TODO-15-leaked-passwords | [Turn on leaked-password protection](#todo-15-leaked-passwords--turn-on-leaked-password-protection) | 🔨 queued |
 | OPEN-16-voice-prefs | [Voice preferences are stored but cannot be set](#open-16-voice-prefs--voice-preferences-are-stored-but-cannot-be-set) | 💭 open |
@@ -127,14 +127,6 @@ close it; production is unaffected, since StrictMode's double run is development
 
 Build: one RPC per save, in a migration, following `save_workout_exercises`.
 
-### TODO-13-discard-confirm — Finished or edited work can be discarded without a confirmation
-
-*Added 2026-09-27 11:14:57.*
-
-The session's X and its "Discard" button throw away a finished or partly finished workout
-with no confirmation, and `WorkoutEditor`'s Back drops unsaved edits. Put each behind
-`ConfirmDialog`, and in the editor ask only when something changed.
-
 ### TODO-15-leaked-passwords — Turn on leaked-password protection
 
 *Added 2026-09-27 11:14:57.*
@@ -226,6 +218,18 @@ None matters at one user's data volume. One migration covers all three; run
 artifact of little traffic and should be left alone.
 
 ## Settled
+
+### TODO-13-discard-confirm — Finished or edited work can be discarded without a confirmation
+
+*Added 2026-09-27 11:14:57 · done 2026-09-27 12:21:34.*
+
+The session's X and its "Discard" button threw away a finished or partly finished workout
+with no confirmation, and `WorkoutEditor`'s Back dropped unsaved edits. Put each behind
+`ConfirmDialog`, and in the editor ask only when something changed.
+
+#### Built 2026-09-27
+
+Both session exits now ask through `ConfirmDialog` once a set is logged, saying how many would be lost, and pause the clock while asking; Cancel restores the pause state it found. The editor's Back asks only when `dirty` is set. A spoken "keep going" while the dialog is open still unpauses, which is harmless and was left.
 
 ### TODO-12-silent-errors — Failed loads render as empty states
 

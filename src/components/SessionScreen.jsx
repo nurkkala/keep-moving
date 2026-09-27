@@ -8,6 +8,7 @@ import {
 } from "../lib/data";
 import { useDistanceUnit } from "../lib/distanceUnit";
 import { KINDS } from "./KindBadge";
+import { ConfirmDialog } from "./Dialog";
 import {
   createSpeaker, createListener, whenVoicesReady, RECOGNITION_SUPPORTED,
 } from "../lib/speech";
@@ -48,6 +49,9 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
   // Kept apart from `error`, which replaces the whole screen: a failed save must
   // leave the log on screen so it can be tried again.
   const [saveError, setSaveError] = useState(null);
+  // Leaving throws the log away, so it asks first once there is a log to lose.
+  // The clock pauses while it asks and resumes as it was on Cancel.
+  const [leaving, setLeaving] = useState(null); // null, or the paused state to restore
 
   // For reps: what the user is about to log. Starts at target, adjustable.
   const [repCount, setRepCount] = useState(null);
@@ -372,6 +376,26 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
     return 0; // rep sets have no natural duration to fill
   }, [step, phase, elapsed, restSec]);
 
+  const askToLeave = () => {
+    if (!log.length) return onExit();
+    setLeaving({ wasPaused: paused });
+    setPaused(true);
+  };
+
+  const leaveDialog = leaving && (
+    <ConfirmDialog
+      title={phase === "complete" ? "Discard this session?" : "End this session?"}
+      body={`${log.length} ${log.length === 1 ? "set" : "sets"} logged so far will not be saved.`}
+      confirmLabel="Discard"
+      destructive
+      onConfirm={onExit}
+      onCancel={() => {
+        setPaused(leaving.wasPaused);
+        setLeaving(null);
+      }}
+    />
+  );
+
   if (loading) {
     return <Screen><p className="text-sm text-subtle">Loading {workout.name}…</p></Screen>;
   }
@@ -447,9 +471,10 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
         >
           {saving ? "Saving…" : saveError ? "Try again" : "Save session"}
         </button>
-        <button onClick={onExit} className="mt-3 w-full text-xs text-subtle hover:text-ink-dim">
+        <button onClick={askToLeave} className="mt-3 w-full text-xs text-subtle hover:text-ink-dim">
           Discard
         </button>
+        {leaveDialog}
       </Screen>
     );
   }
@@ -476,7 +501,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
           </p>
         </div>
         <button
-          onClick={onExit}
+          onClick={askToLeave}
           aria-label="End session"
           className="text-faint hover:text-ink-dim p-1 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent"
         >
@@ -622,6 +647,7 @@ export default function SessionScreen({ workout, onExit, onFinished }) {
       {paused && (
         <p className="mt-3 text-center text-sm text-subtle">Paused — say "keep going"</p>
       )}
+      {leaveDialog}
     </Screen>
   );
 }
